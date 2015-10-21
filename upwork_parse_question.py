@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import shelve
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
 import time
-
+from models import Qestion
 
 
 
@@ -16,7 +18,7 @@ upworkEmail = 'yurij.borovenskij@mail.ru'
 upworkPassword = 'acmilan86'
 
 driver = webdriver.Firefox()
-driver.get('file:///Volumes/GSP1RMCULFRER_RU_DVD/Fortifier_proj/python_test/Upwork%20-%20Adaptive%20Skill%20Test_files/Upwork%20-%20Adaptive%20Skill%20Test.html')
+driver.get('file:///Volumes/GSP1RMCULFRER_RU_DVD/Fortifier_proj/python_test/Upwork%20-%20Adaptive%20Skill%20Test_files/20/Upwork%20-%20Adaptive%20Skill%20Test.html')
 
 
 #Распарсить форму с вопросами
@@ -29,6 +31,22 @@ for question in questionTextElement:
         text_list.append(question.text)
 
 print text_list
+
+
+
+#qw2 = Qestion("Python test", text_list)
+
+
+#Запись значения в базу данных. Базу пока используем примитивную. Shelve
+db = shelve.open('QuestionsDataBase')
+db["qw20"] = Qestion("Python test", text_list)
+db.close()
+
+
+#Чтение из базы данных
+db = shelve.open('QuestionsDataBase')
+for key in db:
+    print(key, '=>\n ', db[key].testName)
 '''
 all_rows = resultSearchTableElement.find_elements_by_tag_name("tr")
 
