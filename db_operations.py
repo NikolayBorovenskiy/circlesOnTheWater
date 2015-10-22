@@ -7,9 +7,9 @@ db = shelve.open('QuestionsDataBase')
 
 for key in db:
     print(key, '=>\n ', db[key].testName)
-    key = db[key]
-    key.findAnswer()
-    db['key'] = key
+    newObj = db[key]
+    newObj.findAnswer()
+    db[key] = newObj
 
 db.close()
 db = shelve.open('QuestionsDataBase')
