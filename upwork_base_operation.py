@@ -4,6 +4,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
 import time
+import os
 
 
 upworkUserName = ''
@@ -103,5 +104,16 @@ if driver.title == "{} - Upwork".format(listFoundTests[0]):
     print "Bot: I am on {} page! Ready to start test.".format(listFoundTests[0])
 else:
     print "Bot: I am lost. ;("
+
+
+#Бот заходит на страницу с тестом
+
+#driver.get('file:///Volumes/GSP1RMCULFRER_RU_DVD/Fortifier_proj/python_test/Python%20Test%20-%20Upwork.html')
+#startTestButtonPath = ".//*[@id='main']/div[3]/div/div[1]/div/a"
+#startTestButtonElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_xpath(startTestButtonPath))
+#startTestButtonElement.click()
+print "Bot: Start test! Good luck!"
+time.sleep(10)
+os.system('python upwork_parse_question.py')
 
 #driver.quit()

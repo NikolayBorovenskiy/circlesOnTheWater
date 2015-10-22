@@ -22,7 +22,7 @@ class Qestion(object):
             count+=1
             print " {}. {}.".format(count, answer)
 
-        self.correctAnswer = raw_input("Which answer is correct?\n")
+        self.correctAnswer = self.answers[int(raw_input("Which answer is correct?\n"))-1]
 
 
 

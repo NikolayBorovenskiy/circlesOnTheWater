@@ -6,6 +6,8 @@ from models import Qestion
 db = shelve.open('QuestionsDataBase')
 
 for key in db:
+    #Если ответ на ворос не установлен, то задаем этот вопрос
+    #if db[key].correctAnswer is None:
     print(key, '=>\n ', db[key].testName)
     newObj = db[key]
     newObj.findAnswer()
