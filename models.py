@@ -22,7 +22,11 @@ class Qestion(object):
             count+=1
             print " {}. {}.".format(count, answer)
 
-        self.correctAnswer = self.answers[int(raw_input("Which answer is correct?\n"))-1]
+        #Правильных ответов может быть нескольно на один ворос
+        #raw_input("Which answer is correct?\n")
+
+        self.correctAnswer = [self.answers[int(i)-1] for i in raw_input("Which answer is correct?\n")]
+
 
 
 
