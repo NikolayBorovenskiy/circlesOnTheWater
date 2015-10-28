@@ -40,6 +40,7 @@ loginStartPageButtonClass = "header-link-login"
 #Go from start page to login page
 loginStartPageButtonElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_xpath(loginStartPageButtonXpath))
 loginStartPageButtonElement.click()
+print type(loginStartPageButtonElement)
 #Проверка, что все же попали на страницу логирования, если заголок страницы не такой как мы ожидаем, то мой бот - потеряша
 if driver.title == "Log In - Upwork":
     print "Bot: I am on Login Page!"
@@ -54,6 +55,7 @@ loginSubmitElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_
 
 emailFieldElement.clear()
 emailFieldElement.send_keys(upworkEmail)
+print type(emailFieldElement)
 passwordFieldElement.clear()
 passwordFieldElement.send_keys(upworkPassword)
 loginSubmitElement.click()

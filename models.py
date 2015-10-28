@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-import shelve 
+import time
+import os
+import random
+import sys
+
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 class Qestion(object):
@@ -33,20 +40,117 @@ class Qestion(object):
         #return "{}; {}; {}; {}".format(self.testName, self.qestionText, '#~'.join(self.answers), self.correctAnswer)
 
 
+class Bot(object):
+    def __init__(self,  botName):
+        self.botName = botName if botName else "Bot"
+        self.driver = None
+        self.htmlElement = None
+        self.htmlElementField = None
+        self.xpathAdress = None
+        self.parseTime = 10
+
+    def doSpeak(self, phrase):
+        print "{}: {}".format(self.botName.capitalize(), phrase)
+
+    def _makeDriver(self, browser):
+        if browser is "Firefox":
+            self.driver = webdriver.Firefox()
+        elif browser is "Google Chrome":
+            print "Do something Google Chrome"
+        else:
+            print "Do something IE"
+
+    def _getURL(self, targetAdress):
+        self.driver.get(targetAdress)
+
+    def checkLocation(self, titleText, location):
+        #Проверка, что бот на странице своего аккаунта
+        if self.driver.title == titleText:
+            self.doSpeak("I am on {} page!".format(location))
+        else:
+            self.doSpeak("I am lost. ;(")
+            sys.exit()
+
+    def clickOnButton(self, xpath):
+        self.htmlElement = WebDriverWait(self.driver, self.parseTime).until(lambda driver: driver.find_element_by_xpath(xpath))
+        self.htmlElement.click()
+
+    def writeField(self, xpath, text):
+        self.htmlElement = WebDriverWait(self.driver, self.parseTime).until(lambda driver: driver.find_element_by_xpath(xpath))
+        self.htmlElement.clear()
+        self.htmlElement.send_keys(text)
+
+    def start(self, targetAdress):
+        self._makeDriver("Firefox")
+        self._getURL(targetAdress)
+
+    def parseTable(self, tablePath, colClassName):
+        self.htmlElement = WebDriverWait(self.driver, self.parseTime).until(lambda driver: driver.find_element_by_xpath(tablePath))
+        parseElement = []
+
+        #for tr in self.htmlElement.find_elements_by_tag_name("tr"):
+        for tr in WebDriverWait(self.htmlElement, self.parseTime).until(lambda driver: driver.find_elements_by_tag_name("tr")):
+            for td in tr.find_elements_by_class_name(colClassName):
+                print td.text
+                if td.text:
+
+
+
+                    parseElement.append(td.text)
+        return parseElement
+
+
+
+
+
+
+#print "Bot: I find {} test.".format(len(listFoundTests))
+#for test in listFoundTests:
+#    print "- {}.".format(test)
+
+
+
+
+
 
 
 if __name__ == '__main__':
+    bot = Bot("Anny")
+    bot.start("https://www.upwork.com/")
+    #Проверить где бот
+    bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing")
 
-    test_list = [u'Which of the following is the correct way to execute a program from inside Python without having to consider how the arguments/quotes are formatted?',
-                 u"import subprocess\nsubprocess.call('C:\\\\Temp\\\\a b c\\\\Notepad.exe', 'C:\\\\test.txt')",
-                 u"os.call(['C:\\\\Temp\\\\a b c\\\\Notepad.exe', 'C:\\\\test.txt'])",
-                 u"import subprocess\nsubprocess.call(['C:\\\\Temp\\\\a b c\\\\Notepad.exe', 'C:\\\\test.txt'])", u"subprocess.call(['C:\\\\Temp\\\\a b c\\\\Notepad.exe', 'C:\\\\test.txt'])"]
+    #Переход на страницу логирования
+    bot.clickOnButton("html/body/div[1]/div/header/div[1]/div[2]/nav/ul[2]/li[2]/a")
+    #Проверить где бот
+    bot.checkLocation("Log In - Upwork", "login")
 
-    qw1 = Qestion("Python test", test_list)
+    #Заполнить поле с логином и паролем
+    bot.writeField(".//*[@id='login_username']", "Svyatich")
+    bot.writeField(".//*[@id='login_password']", "CdznjDkflbvbh1982")
+    #Залогиниться
+    bot.clickOnButton(".//*[@id='layout']/div[1]/div/form/div[3]/div[1]/button")
+    #Проверить где бот
+    bot.checkLocation("Find Jobs - Upwork", "my")
+
+    #Переход на страницу с тестами
+    bot.clickOnButton("html/body/header/div/div[3]/nav/ul/li[6]/a")
+    #Проверить где бот
+    bot.checkLocation("Qualification Tests for Freelancers & Programmers - Certifications for Outsourcing - Upwork", "tests'")
+
+    #Поиск нужного теста. В данном случае это тесты по python
+    bot.writeField(".//*[@id='filter_name']", "English")
+    bot.clickOnButton(".//*[@id='submitButton']")
+    time.sleep(5)
+    #Распарсить таблицу с результатами найденных тестов
+
+    print bot.parseTable('//*[@id="skilltestslist"]', 'test_name')
+'''
+    #qw1 = Qestion("Python test", test_list)
     #print qw1
     print ''
     #print parserModel(qw1)
-'''
+
     print qw1.testName
     print qw1.qestionText
     print qw1.answers
