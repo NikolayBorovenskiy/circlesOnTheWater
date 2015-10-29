@@ -11,9 +11,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from models import Qestion, Bot
 from utils_SQlite3 import *
 
+from upwork_parse_question import listSavePagesPythonTestHome
+
+
 #Создание бота!!!
 bot = Bot("Anny")
-
 bot.start("https://www.upwork.com/")
 #Проверить где бот
 bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing")
@@ -37,7 +39,7 @@ bot.clickOnButton("html/body/header/div/div[3]/nav/ul/li[6]/a")
 bot.checkLocation("Qualification Tests for Freelancers & Programmers - Certifications for Outsourcing - Upwork", "tests'")
 
 #Поиск нужного теста. В данном случае это тесты по python
-bot.writeField(".//*[@id='filter_name']", "English")
+bot.writeField(".//*[@id='filter_name']", "Python")
 bot.clickOnButton(".//*[@id='submitButton']")
 time.sleep(5)
 #Распарсить таблицу с результатами найденных тестов
@@ -63,6 +65,10 @@ bot.clickOnButton(".//*[@id='skilltestslist']/tbody/tr[{}]/td[1]/a".format(testN
 #Проверить, где находится бот
 bot.checkLocation("{} - Upwork".format(testList[int(testNumber)-1]), "{}".format(testList[int(testNumber)-1]))
 
+
+#Бот заходит на страницу с тестом
+bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/4/Python%20Test%20-%20Upwork.html')
+
 #Заходим на страницу с тестами
 bot.clickOnButton(".//*[@id='main']/div[3]/div/div[1]/div/a")
 #Проверить, где находится бот
@@ -79,8 +85,6 @@ except:
     print "Table already create."
 
 
-
-listSavePagesPythonTestHome = []
 #В ЭТОМ РАЗДЕЛЕ БОТ ОТВЕЧАЕТ НА ВОПРОСЫ
 for linkToTestPage in listSavePagesPythonTestHome:
     bot._getURL(linkToTestPage)
@@ -103,7 +107,7 @@ for linkToTestPage in listSavePagesPythonTestHome:
 
     #Проверка на условие, что в вопросе больше чем один правильный ответ. Это бывает не часто
     try:
-        bot.parseElement("/html/body/div/div/div[1]/div/div/form/p[3]")
+        bot.parseElement("/html/body/div/div/div[1]/div/div/form/p[3]", 1)
         amountAnswersMoreOne = "True"
         bot.doSpeak("Attention! The number of correct answers may be more than one.")
     except:

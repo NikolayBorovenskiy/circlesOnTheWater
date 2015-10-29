@@ -80,8 +80,8 @@ class Bot(object):
             self.doSpeak("I am lost. ;(")
             sys.exit()
 
-    def parseElement(self, xpath):
-        return WebDriverWait(self.driver, self.parseTime).until(lambda driver: driver.find_element_by_xpath(xpath))
+    def parseElement(self, xpath, time = None):
+        return WebDriverWait(self.driver, self.parseTime if not time else time).until(lambda driver: driver.find_element_by_xpath(xpath))
 
     def clickOnButton(self, xpath):
         self.htmlElement = WebDriverWait(self.driver, self.parseTime).until(lambda driver: driver.find_element_by_xpath(xpath))

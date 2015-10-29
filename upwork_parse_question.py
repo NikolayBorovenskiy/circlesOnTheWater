@@ -124,128 +124,131 @@ linkTestPass = [
     'file:///media/nikolay/GSP1RMCULFRER_RU_DVD/Fortifier_proj/python_test/Upwork%20-%20Adaptive%20Skill%20Test_files/Upwork%20-%20Adaptive%20Skill%20Test.html',
 ]
 
-driver = webdriver.Firefox()
 
 
-#Поочередно вызываем каждую страничку и если вопрос новый, запишем его в базу данных.
-#Соеденение с базой данных
-cur, con = connect_or_create('upwork.db')
-#Создадим таблицу Question, если она еще не создана
-try:
-    create_table("Qestion", cur, "ID", "TEST", "QESTION", "ANSWERS", "CORRECT", "MOREONE")
-except:
-    print "Table alredy create."
+if __name__ == '__main__':
+    driver = webdriver.Firefox()
 
 
-numberNewRecordToDataBase = 0
-questionCounter = 0
-for linkToTestPage in listSavePagesPythonTestHome:
-    questionCounter+=1
-    driver.get(linkToTestPage)
-
-    #Попробовать распарсить форму с вопросами
-    questionFormID = "questionForm"
+    #Поочередно вызываем каждую страничку и если вопрос новый, запишем его в базу данных.
+    #Соеденение с базой данных
+    cur, con = connect_or_create('upwork.db')
+    #Создадим таблицу Question, если она еще не создана
     try:
-        questionFormElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_id(questionFormID))
+        create_table("Qestion", cur, "ID", "TEST", "QESTION", "ANSWERS", "CORRECT", "MOREONE")
     except:
-        #проверим на условие, что тест не сдан
-        resultFormXPath = '/html/body/div/div/div[1]/p'
-        resultFormElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_xpath(resultFormXPath))
-        if resultFormElement.text.find("Sorry, you didn't pass") != -1:
-            #Тест не сдан
-            finalScoreXPath = '/html/body/div/div/div[1]/div/div[1]/ul/li[2]/div[2]'
-            finalScoreElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_xpath(finalScoreXPath))
-            print "Bot: I got {} questions.".format(questionCounter)
-            print "Bot: Unfortunately I did not pass the test :(. Score: {}".format(finalScoreElement.text)
-        elif resultFormElement.text.find("Congratulations! You've completed") != -1:
-            #Значит тест сдан.
-            #Нужно показать результат
-            print 'Bot: Cool! I passed the test successfully :)'
-            finalScoreXPath = '/html/body/div/div/div[1]/div/div[1]/ul/li[2]/div[2]'
-            finalScoreElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_xpath(finalScoreXPath))
-            print 'Bot: Final score: {}'.format(finalScoreElement.text)
-        else:
-            #Проверяем на условие вдруг тест сдан успешно
-
-            print "Bot: I am lost ;("
-        sys.exit()
-
-    #Проверка на условие, что в вопросе больше чем один правильный ответ. Это бывает не часто
-    try:
-        amountAnswersXPath = '/html/body/div/div/div[1]/div/div/form/p[3]'
-        amountAnswersElement = WebDriverWait(driver, 0.5).until(lambda driver: driver.find_element_by_xpath(amountAnswersXPath))
-        amountAnswersMoreOne = "True"
-        print "Bot: Attention! The number of correct answers may be more than one."
-    except:
-        amountAnswersMoreOne = ''
-        print "Bot: Only one answer is correct."
-
-    questionTextElement = questionFormElement.find_elements_by_tag_name('pre')
+        print "Table alredy create."
 
 
-    text_list = []
-    paramsToNewObj = []
-    for question in questionTextElement:
-        if question.text:
-            text_list.append(question.text)
+    numberNewRecordToDataBase = 0
+    questionCounter = 0
+    for linkToTestPage in listSavePagesPythonTestHome:
+        questionCounter+=1
+        driver.get(linkToTestPage)
 
-    #print text_list[0]
-    #Проверка есть ли правильный ответ в базе данных
-    #если его нет, то запишем в базу новый вопрос
-    numberAnswer = []
+        #Попробовать распарсить форму с вопросами
+        questionFormID = "questionForm"
+        try:
+            questionFormElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_id(questionFormID))
+        except:
+            #проверим на условие, что тест не сдан
+            resultFormXPath = '/html/body/div/div/div[1]/p'
+            resultFormElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_xpath(resultFormXPath))
+            if resultFormElement.text.find("Sorry, you didn't pass") != -1:
+                #Тест не сдан
+                finalScoreXPath = '/html/body/div/div/div[1]/div/div[1]/ul/li[2]/div[2]'
+                finalScoreElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_xpath(finalScoreXPath))
+                print "Bot: I got {} questions.".format(questionCounter)
+                print "Bot: Unfortunately I did not pass the test :(. Score: {}".format(finalScoreElement.text)
+            elif resultFormElement.text.find("Congratulations! You've completed") != -1:
+                #Значит тест сдан.
+                #Нужно показать результат
+                print 'Bot: Cool! I passed the test successfully :)'
+                finalScoreXPath = '/html/body/div/div/div[1]/div/div[1]/ul/li[2]/div[2]'
+                finalScoreElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_xpath(finalScoreXPath))
+                print 'Bot: Final score: {}'.format(finalScoreElement.text)
+            else:
+                #Проверяем на условие вдруг тест сдан успешно
 
-    #Проверяем есть ли правильный ответ в базе данных
-    #Запрос к базе данных
-    qestionIS = filter_table("Qestion", cur, "TEST", "QESTION", ["Python test", text_list[0]])
-    if qestionIS:
-        print "Bot: I know this qestion :)"
-        #Правильный ответ есть.
-        tempObj = Qestion(*(list(qestionIS[0]))[1:])
-        print tempObj
-        print tempObj.testName
-        print tempObj.qestionText
-        print tempObj.answers
-        print tempObj.correctAnswer
-        print tempObj.moreOneAnswer
-        #Поиск в базе данных правильного ответа
-        if tempObj.correctAnswer != 'No answer': #Если есть правильный ответ на вопрос
-            print "Bot: I know answer :)"
-            #определяем номер правильного ответа, которые есть в базе, зная текст ответа. Это делается для надежности в реальных условиях
-            for correct in tempObj.correctAnswer.split('#~'):
-                #номерация с нулевого значения
-                numberAnswer.append([i.strip() for i in tempObj.answers.split('#~')].index(correct.strip()))
-        else:
-            print "Bot: I don't know answer :("
-            numberAnswer = [random.randint(0, len(text_list[1:])-1)] #Случайный ответ, если не знаешь что отвечать
-    else:
-        #Если в базе вопроса нет, то ответ выберется рандомно, а новый вопрос запишеться в базу данных вопросов.
-        print "Bot: Write to base data"
-        print "Bot: I don't know this question ..."
-        #Qestion("Python test", text_list)
-        paramsToNewObj.append("Python test")
-        paramsToNewObj.append(text_list[0])
-        paramsToNewObj.append('#~'.join(text_list[1:]))
-        paramsToNewObj.append('No answer')
-        paramsToNewObj.append(amountAnswersMoreOne)      
-        #Сохраним запись в базу данных
-        save_records("Qestion", cur, con,parserModel(Qestion(*paramsToNewObj)))
-        numberAnswer = [random.randint(0, len(text_list[1:])-1)] #Случайный ответ, если не знаешь что отвечать
+                print "Bot: I am lost ;("
+            sys.exit()
 
-    #Выбор всех правильные ответов на поставленные вопросы
-    for i in numberAnswer:
-        print numberAnswer, 'numberAnswer'
-        #Реализация механизма ответа на вопросы теста.
-        #print numberAnswer
+        #Проверка на условие, что в вопросе больше чем один правильный ответ. Это бывает не часто
+        try:
+            amountAnswersXPath = '/html/body/div/div/div[1]/div/div/form/p[3]'
+            amountAnswersElement = WebDriverWait(driver, 0.5).until(lambda driver: driver.find_element_by_xpath(amountAnswersXPath))
+            amountAnswersMoreOne = "True"
+            print "Bot: Attention! The number of correct answers may be more than one."
+        except:
+            amountAnswersMoreOne = ''
+            print "Bot: Only one answer is correct."
+
+        questionTextElement = questionFormElement.find_elements_by_tag_name('pre')
+
+
+        text_list = []
+        paramsToNewObj = []
+        for question in questionTextElement:
+            if question.text:
+                text_list.append(question.text)
+
         #print text_list[0]
-        #time.sleep(3)
-        answerButtonXPath = "/html/body/div/div/div[1]/div/div/form/fieldset/div/div[{}]".format(i+1)
-        answerButtonElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_xpath(answerButtonXPath))
-        answerButtonElement.click()
-        #time.sleep(3)
+        #Проверка есть ли правильный ответ в базе данных
+        #если его нет, то запишем в базу новый вопрос
+        numberAnswer = []
 
-    #Подтверждаем ответ
-    submitAnswerID = "continue"
-    submitAnswerElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_id(submitAnswerID))
-    submitAnswerElement.click()
+        #Проверяем есть ли правильный ответ в базе данных
+        #Запрос к базе данных
+        qestionIS = filter_table("Qestion", cur, "TEST", "QESTION", ["Python test", text_list[0]])
+        if qestionIS:
+            print "Bot: I know this qestion :)"
+            #Правильный ответ есть.
+            tempObj = Qestion(*(list(qestionIS[0]))[1:])
+            print tempObj
+            print tempObj.testName
+            print tempObj.qestionText
+            print tempObj.answers
+            print tempObj.correctAnswer
+            print tempObj.moreOneAnswer
+            #Поиск в базе данных правильного ответа
+            if tempObj.correctAnswer != 'No answer': #Если есть правильный ответ на вопрос
+                print "Bot: I know answer :)"
+                #определяем номер правильного ответа, которые есть в базе, зная текст ответа. Это делается для надежности в реальных условиях
+                for correct in tempObj.correctAnswer.split('#~'):
+                    #номерация с нулевого значения
+                    numberAnswer.append([i.strip() for i in tempObj.answers.split('#~')].index(correct.strip()))
+            else:
+                print "Bot: I don't know answer :("
+                numberAnswer = [random.randint(0, len(text_list[1:])-1)] #Случайный ответ, если не знаешь что отвечать
+        else:
+            #Если в базе вопроса нет, то ответ выберется рандомно, а новый вопрос запишеться в базу данных вопросов.
+            print "Bot: Write to base data"
+            print "Bot: I don't know this question ..."
+            #Qestion("Python test", text_list)
+            paramsToNewObj.append("Python test")
+            paramsToNewObj.append(text_list[0])
+            paramsToNewObj.append('#~'.join(text_list[1:]))
+            paramsToNewObj.append('No answer')
+            paramsToNewObj.append(amountAnswersMoreOne)      
+            #Сохраним запись в базу данных
+            save_records("Qestion", cur, con,parserModel(Qestion(*paramsToNewObj)))
+            numberAnswer = [random.randint(0, len(text_list[1:])-1)] #Случайный ответ, если не знаешь что отвечать
 
-driver.quit()
+        #Выбор всех правильные ответов на поставленные вопросы
+        for i in numberAnswer:
+            print numberAnswer, 'numberAnswer'
+            #Реализация механизма ответа на вопросы теста.
+            #print numberAnswer
+            #print text_list[0]
+            #time.sleep(3)
+            answerButtonXPath = "/html/body/div/div/div[1]/div/div/form/fieldset/div/div[{}]".format(i+1)
+            answerButtonElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_xpath(answerButtonXPath))
+            answerButtonElement.click()
+            #time.sleep(3)
+
+        #Подтверждаем ответ
+        submitAnswerID = "continue"
+        submitAnswerElement = WebDriverWait(driver, 10).until(lambda driver: driver.find_element_by_id(submitAnswerID))
+        submitAnswerElement.click()
+
+    driver.quit()
