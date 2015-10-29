@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 import sqlite3
 
+from docx import Document
+from docx.shared import Inches
+
 """
 Инструменты для работы с базой данных sqlite3
+Так же есть инструмент для печати результатов в docx формате
 """
 
 #Создать или подключиться к базе данных
@@ -64,8 +68,6 @@ def filter_table(tableName, cursor, field1, field2=None, dataList=None):
 		cursor.execute("SELECT * FROM {} WHERE {} = ? and {} = ?".format(tableName, field1, field2), dataList)
 	else:
 		cursor.execute("SELECT * FROM {} WHERE {} = ?".format(tableName, field1), dataList)
-
-
 	data = cursor.fetchall()
 	return data
 
@@ -78,5 +80,33 @@ def parserModel(obj):
         #if i == '{}'.format(obj).split(';')[-1].strip():
         #    i = bool(i)
         results.append(i)
-
     return results
+
+
+#Сохранить результаты в docx файле.
+#Использую для этого пакет python-docx
+def saveInFile(data):
+	#проверка, что переданные данные - валидные
+	if not len(data) or data[0]<5:
+		return "Pass data not valid!"
+	document = Document()
+	document.add_picture('python_doc/games.jpg', width=Inches(1.25))
+	document.add_heading('{}'.format(data[0][1]), 0)
+	#Отрендерить все данные
+	for record in data:
+		document.add_heading('\n{}. {}'.format(record[0]+1, record[2]), level=3)
+		if record[5]:
+			document.add_paragraph('There may be more than one answer.', style='IntenseQuote')
+		counterAnswer = 0
+		for answer in record[3].split('#~'):
+			counterAnswer+=1
+			#Выделяем правильный ответ жирны
+			if answer in record[4].split('#~'):
+				p = document.add_paragraph("")
+				p.add_run("\n{}. {}".format(counterAnswer, answer)).bold = True
+			else:
+				p = document.add_paragraph("\n{}. {}".format(counterAnswer, answer))
+
+	document.save('{}_qestions.docx'.format(data[0][1]))
+	return "File success write."
+
