@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import shelve
-from models import Qestion
-from utils_SQlite3 import *
+
+from utils.models import Qestion
+from utils.SQlite3 import *
 
 #Чтение данных из базы
 '''
@@ -81,13 +82,24 @@ for key in db:
 #Запись результатов в файл
 cur, con = connect_or_create('upwork.db')
 '''
+'''
+cur, con = connect_or_create('upwork_work_version.db')
 
-cur, con = connect_or_create('upwork.db')
+for i in filter_table("Qestion", cur, "TEST", None, ["Django Test"]):
+    print i[0]
 #filterResult = filter_table("Qestion", cur, "TEST", None, ["Python test"])
+#print create_table("User", cur, con, USERNAME = "TEXT", EMAIL = "TEXT", PASSWORD = "TEXT")
+#print saveInFile(filter_table("Qestion", cur, "TEST", None, ["Python test"]))
+'''
 
-print saveInFile(filter_table("Qestion", cur, "TEST", None, ["Python test"]))
 
-
+"""
+for (type, name) in showInfo('Qestion', cur):
+    if type == u"BOOLEAN":
+        print 'bool'
+    else:
+        print 'not bool'
+"""
 #Изменить значения в базе
 #idCount = 0
 #for key in filter_table("Qestion", cur, "TEST", None, ["Python test"]):
@@ -95,3 +107,25 @@ print saveInFile(filter_table("Qestion", cur, "TEST", None, ["Python test"]))
 #	if key[4].find('#~')!=-1:
 #		update_record("Qestion", cur, con, "MOREONE", True, idCount)
 #	idCount+=1
+
+
+def hyphenation(text, length=100):
+    newText=''
+    while True:
+        if len(text)>length and not text.count('\n'):
+            findSpace = text[length:].strip().find(' ')
+            if findSpace>0:
+                newText += '{}\n'.format(text[:length+findSpace+1])
+                text = text[length+findSpace+1:].strip()
+            else:
+                newText+=text
+                break
+        else:
+            newText+=text
+            break
+    return newText
+
+
+
+someText = "Which of the following is the correct prototype for the 'open' function of the file class in python 2.2+?"
+print hyphenation(someText, 100)
