@@ -145,3 +145,29 @@ LINK_CSS_TEST = [
     'file:///home/nikolay/Fortifier_proj/HolesUpwork/css_test/Upwork%20-%20Adaptive%20Skill%20Test20.html',
 ]
 
+
+MAC_ADDRESS = ['54:04:a6:e2:db:a2',]
+#MAC_ADDRESS = []
+
+PROXY_LIST = {
+    "Germany": ["213.239.201.48", 60088],
+    "China": ["218.200.66.196", 8080],
+    "China": ["221.7.129.100", 1080],
+    "China": ["101.6.52.217", 1080],
+    "Canada": ["198.169.246.30", 80],
+    "Ghana": ["197.159.142.97", 8080],
+    "Russia": ["193.107.152.66", 3128],
+    "Belarus": ["80.249.92.47", 8080],
+    "Serbia": ["176.106.120.82", 8080],
+    "Netherlands": ["84.106.211.32", 80],
+    "Finland": ["188.165.141.151", 80],
+    "Taiwan": ["114.38.156.130", 8088],
+    "Germany": ["104.236.227.136", 9450],
+    "USA": ["104.46.60.254", 8080],
+    "USA": ["52.32.80.190", 80],
+}
+
+REG_EMAIL = '^[a-zA-Z0-9.-_]{1,100}[@][a-z]{2,6}\.[a-z]{2,4}'
+REG_LOGIN = '[a-zA-Z0-9._-]{2,}'
+REG_PASSORD = '[A-Za-z0-9@#$%^&+=]{8,}'
+REG_TEST_NAME = '[A-Za-z0-9+.# ]{2,}'

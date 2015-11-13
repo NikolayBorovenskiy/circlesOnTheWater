@@ -67,6 +67,8 @@ if __name__ == "__main__":
     #Создание бота!!!
     bot = Bot("Anny")
     bot.start("https://www.upwork.com/")
+    #bot.start("http://whatismyipaddress.com/")
+
     #Проверить где бот
     
     writeTempFile(bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing"))
@@ -111,7 +113,7 @@ if __name__ == "__main__":
             writeTempFile(bot.doSpeak("{}. {}".format(i+1, testList[i])))
         while True:
             #Ждем пока пользователь не выберет нужный тест
-            file = open("botPhrase.txt", 'r')
+            file = open("data/botPhrase.txt", 'r')
             fileContent = file.readlines()
             if fileContent.count("Test selected.\n"):
                 testNumber = int(fileContent[-1])

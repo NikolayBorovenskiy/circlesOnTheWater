@@ -13,30 +13,8 @@ from time import *
 from utils.common import *
 from utils.SQlite3 import *
 from utils.models import *
+from utils.constants import MAC_ADDRESS, REG_EMAIL, REG_LOGIN, REG_PASSORD, REG_TEST_NAME 
 
-
-
-wildcard = "Document source (*.doc)|*.docx|" \
-            "All files (*.*)|*.*"
-
-#Подключимся к базе данных
-cur, con = connect_or_create('data/upwork_work_version.db')
-
-#Создадим таблицу User, если она еще не создана
-try:
-    print create_table("User", cur, con, USERNAME = "TEXT", EMAIL = "TEXT", PASSWORD = "TEXT")
-except:
-    print "Table already create."
-
-
-#Создадим таблицу Question, если она еще не создана
-try:
-    create_table("Qestion", cur, con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")
-except:
-    print "Table already create."
-
-
-timer, timer1, timer2 = None, None, None
 
 #===================================================================================================
 class Event(object):
@@ -129,7 +107,8 @@ class NewUserDialog(wx.Dialog):
         self.result.append(self.fieldLogin.GetValue())
         self.result.append(self.fieldEmail.GetValue())
         self.result.append(self.fieldPassword.GetValue())
-        if self.result[0] and self.result[1] and self.result[2]:
+        #Валидация введенных данных
+        if validation(self.result[0], REG_LOGIN) and validation(self.result[1], REG_EMAIL) and validation(self.result[2], REG_PASSORD):
             self.Destroy()
 
     def onCancel(self, event):
@@ -180,8 +159,10 @@ class StartTestDialog(wx.Dialog):
     
         #Достать пользователя из базы данных
         global cur, con
+        user = self.listUser.GetValue()
+        test = self.fieldTestName.GetValue()
         try:
-            _, userName, email, password = filter_table("User", cur, "USERNAME", None, [self.listUser.GetValue()])[0]
+            _, userName, email, password = filter_table("User", cur, "USERNAME", None, [user])[0]
             file = open("data/botPhrase.txt", 'w')
             file.write('Hello!')
             file.close()
@@ -189,9 +170,9 @@ class StartTestDialog(wx.Dialog):
             print "IndexError"
         #Создание нового потока программы
         #Запустить скрипт в другом потоке
-        if self.fieldTestName.GetValue() and self.listUser.GetValue():   
+        if validation(test, REG_TEST_NAME) and user:   
             t1 = Thread(target=execute, args=("python core.py --test_name {} --user_name {} --email {} --password {}",
-                                                self.fieldTestName.GetValue(),
+                                                test,
                                                 userName.replace(' ', '_'),
                                                 email,
                                                 password.replace(';', '\;')))
@@ -329,6 +310,7 @@ class UpperPanelSolving(wx.Panel):
         self.GetParent().Fit()
 
     def OnSave(self, event):
+        global cur, con
         print "Counter: ", self.counter
         print "ID: ", filter_table("Qestion", cur, "TEST", None, [self.testName])[self.counter][0]
         #selection = self.cb.GetValue()
@@ -340,9 +322,8 @@ class UpperPanelSolving(wx.Panel):
 
         self.questionObj.findAnswer(answersStr)
         print self.questionObj.correctAnswer
-        global cur, con
-
         tableIndexs = [i[0] for i in filter_table("Qestion", cur, "TEST", None, [self.testName])]
+
         print update_record("Qestion", cur, con, "CORRECT", '#~'.join(self.questionObj.correctAnswer), tableIndexs[self.counter-1])
 
 
@@ -477,9 +458,12 @@ class AllTestsPanel(wx.Panel):
 
         self.saveBtn = wx.Button(self, -1, "SAVE", (15, 160), (130, 35))
         self.saveBtn.Disable()
-        self.saveBtn.Bind(wx.EVT_BUTTON, self.onSaveFile)
+        self.saveBtn.Bind(wx.EVT_BUTTON, self.saveFile)
 
-        self.deleteBtn = wx.Button(self, -1, "DELETE", (15, 200), (130, 35))
+        self.loadBtn = wx.Button(self, -1, "LOAD", (15, 200), (130, 35))
+        self.loadBtn.Bind(wx.EVT_BUTTON, self.loadFile)
+
+        self.deleteBtn = wx.Button(self, -1, "DELETE", (15, 240), (130, 35))
         self.deleteBtn.Disable()
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.DeleteTest)
 
@@ -516,7 +500,7 @@ class AllTestsPanel(wx.Panel):
             self.deleteBtn.Enable()
 
         self.testInfoText.SetLabel("Total: {}\nAnswered: {}\nUnanswered: {}".format(len(filter_table("Qestion", cur, "TEST", None, [userInfo])), 
-                                                                                    len([i for i in filter_table("Qestion", cur, "TEST", None, [userInfo]) if i[4]!='No answer']), 
+                                                                                    len([i for i in filter_table("Qestion", cur, "TEST", None, [userInfo]) if i[4]!='No answer' and i[4]!='']), 
                                                                                     len(filter_table("Qestion", cur, "TEST", None, [userInfo])) - len([i for i in filter_table("Qestion", cur, "TEST", None, [userInfo]) if i[4]!='No answer'])))
 
     
@@ -533,7 +517,7 @@ class AllTestsPanel(wx.Panel):
             
 
     #-----------------------------------------------------------------------------------
-    def onSaveFile(self, event):
+    def saveFile(self, event):
         """
         Create and show the Save FileDialog
         """
@@ -548,6 +532,25 @@ class AllTestsPanel(wx.Panel):
             #Этап сохранения файла по отдельному тесту в doc
             saveInFile(filter_table("Qestion", cur, "TEST", None, [userInfo]), path)
             print "You chose the following filename: %s" % path
+        dlg.Destroy()
+
+
+    def loadFile(self, event):
+        """
+        Create and show the Open FileDialog
+        """
+        dlg = wx.FileDialog(
+            self, message="Choose a file",
+            defaultDir=self.currentDirectory, 
+            defaultFile="",
+            wildcard=wildcard,
+            style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR
+            )
+        if dlg.ShowModal() == wx.ID_OK:
+            paths = dlg.GetPaths()
+            print "You chose the following file(s):"
+            for path in paths:
+                parse_docx(get_docx_text(path))
         dlg.Destroy()
 
 
@@ -706,9 +709,36 @@ class App(wx.App):
 
 
 
-# init threads
+# Run the program
+if __name__ == "__main__":  
+    #sys.exit()
+    # init threads
+
+    #User validation
+    authorization(MAC_ADDRESS)
 
 
+    wildcard = "Document source (*.doc)|*.docx|" \
+                "All files (*.*)|*.*"
 
-app = App()
-app.MainLoop()
+    #Подключимся к базе данных
+    cur, con = connect_or_create('data/upwork_work_version.db')
+
+    #Создадим таблицу User, если она еще не создана
+    try:
+        print create_table("User", cur, con, USERNAME = "TEXT", EMAIL = "TEXT", PASSWORD = "TEXT")
+    except:
+        print "Table already create."
+
+
+    #Создадим таблицу Question, если она еще не создана
+    try:
+        create_table("Qestion", cur, con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")
+    except:
+        print "Table already create."
+
+    timer, timer1, timer2 = None, None, None
+
+
+    app = App()
+    app.MainLoop()

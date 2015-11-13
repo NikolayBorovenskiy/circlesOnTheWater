@@ -9,6 +9,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 
+from utils.constants import PROXY_LIST
 from SQlite3 import *
 
 class Qestion(object):
@@ -26,11 +27,11 @@ class Qestion(object):
         self.correctAnswer = None
 
     def findAnswer(self, corrects):
-        print "QESTION: {}\n".format(self.qestionText)
-        count = 0
-        for answer in self.answers.split('#~'):
-            count+=1
-            print " {}. {}.".format(count, answer)
+        #print "QESTION: {}\n".format(self.qestionText)
+        #count = 0
+        #for answer in self.answers.split('#~'):
+            #count+=1
+            #print " {}. {}.".format(count, answer)
 
         #Правильных ответов может быть нескольно на один ворос
         #raw_input("Which answer is correct?\n")
@@ -51,15 +52,24 @@ class Bot(object):
         self.htmlElement = None
         self.htmlElementField = None
         self.xpathAdress = None
+        self.profile = None
         self.parseTime = 10
 
     def doSpeak(self, phrase):
         #return "{}: {}".format(self.botName.capitalize(), phrase)
         return "{}".format(phrase)
 
-    def _makeDriver(self, browser):
+    def _makeProxy(self, ip, port):
+        self.profile = webdriver.FirefoxProfile()
+        self.profile.set_preference("network.proxy.type", 1)
+        self.profile.set_preference("network.proxy.http", ip)
+        self.profile.set_preference("network.proxy.http_port", port)
+        self.profile.update_preferences()
+
+
+    def _makeDriver(self, browser, profile):
         if browser is "Firefox":
-            self.driver = webdriver.Firefox()
+            self.driver = webdriver.Firefox(firefox_profile=profile)
         elif browser is "Google Chrome":
             print "Do something Google Chrome"
         else:
@@ -121,7 +131,8 @@ class Bot(object):
             sys.exit()
 
     def start(self, targetAdress):
-        self._makeDriver("Firefox")
+        self._makeProxy(*ramdomDict(PROXY_LIST))
+        self._makeDriver("Firefox", self.profile)
         self._getURL(targetAdress)
         self.driver.maximize_window()
 
@@ -141,7 +152,6 @@ class Bot(object):
             writeTempFile("I cann't go on. Sorry.")
             sys.exit()
 
-
         #for tr in self.htmlElement.find_elements_by_tag_name("tr"):
         for tr in WebDriverWait(self.htmlElement, self.parseTime).until(lambda driver: driver.find_elements_by_tag_name(tagname)):
             if colClassName:
@@ -155,3 +165,14 @@ class Bot(object):
 
     def askHelp(self, text):
         return raw_input("{}\n".format(text))
+
+
+
+
+def writeTempFile(text):
+    file = open("./data/botPhrase.txt", 'a+')
+    file.write("\n{}".format(text))
+    file.close()
+
+def ramdomDict(dict):
+    return dict[random.choice(dict.keys())]

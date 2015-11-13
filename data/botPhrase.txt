@@ -1,6 +1,1 @@
 Hello!
-I am on landing page!
-I am on login page!
-I am on my page!
-I am on tests page!
-I can't find your test. Sorry.
