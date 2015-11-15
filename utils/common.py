@@ -187,8 +187,6 @@ def parse_docx(data):
             try:
                 qestionText = re.sub(r'#\d{0,9}. {0,}', '', data[i])
                 ID = filter_table("Qestion", cur, "TEST", "QESTION", [testName, qestionText])[0][0]
-                #mapDict[ID] = None
-                #print data[i].strip()[4:]
             except:
                 result = filter_table("Qestion", cur, "TEST", None, [testName])
                 
