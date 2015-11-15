@@ -146,7 +146,7 @@ LINK_CSS_TEST = [
 ]
 
 
-MAC_ADDRESS = ['54:04:a6:e2:db:a2',]
+MAC_ADDRESS = ['54:04:a6:e2:db:a2', '08:00:27:02:33:ef', ]
 #MAC_ADDRESS = []
 
 PROXY_LIST = {
