@@ -81,9 +81,10 @@ def get_macaddress(host='localhost'):
 
 #Авторизация программы через мак-адресс. Т.е. запускать на компьтерах с опредленных мак-адрессом.
 def authorization(data, iface='eth0'):
-    if sys.platform == "Win32":
+    print sys.platform
+    if sys.platform == "win32":
         mac = get_macaddress(host='localhost')
-    if sys.platform == "Linux":
+    if sys.platform == "linux2":
         mac = getmac(iface)
     if not mac in data:
         print "Unfamiliar MAC address!"
@@ -116,9 +117,8 @@ def saveInFile(data, path):
     font.color.rgb = RGBColor(102, 51, 102)
     font.size = Pt(18)
     font.bold = True
-
-
-    document.add_picture('./images/imgo.jpeg', width=Inches(1.25))
+    
+    document.add_picture(os.path.join(os.getcwd(), 'images', 'imgo.jpeg'), width=Inches(1.25))
     #Название теста
     paragraph = document.add_paragraph('{}'.format(data[0][1]), style='Heading 1')
     paragraph_format = paragraph.paragraph_format
@@ -225,10 +225,13 @@ def get_docx_text(path):
     return paragraphs
 
 
-def parse_docx(data):
+def parse_docx(data, currentPath):
 
     #Подключимся к базе данных
-    cur, con = connect_or_create('data/upwork_work_version.db')
+    path = os.path.join(currentPath, 'data', 'upwork_work_version.db')
+    print path
+    #print
+    cur, con = connect_or_create(path)
     qestionText = ''
     testName = data[0]
     qestionPosition = [i for i in range(len(data)) if data[i].startswith('#')]

@@ -10,7 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
-from utils.models import Qestion, Bot
+from utils.models import *
 from utils.SQlite3 import *
 from utils.common import *
 
@@ -93,12 +93,13 @@ if __name__ == "__main__":
     writeTempFile(bot.checkLocation("Qualification Tests for Freelancers & Programmers - Certifications for Outsourcing - Upwork", "tests"))
     locationControl(bot.checkLocation("Qualification Tests for Freelancers & Programmers - Certifications for Outsourcing - Upwork", "tests"))
     #Поиск нужного теста. В данном случае это тесты по python
-    bot.writeField(".//*[@id='filter_name']", args["test_name"])
+    bot.writeField(".//*[@id='filter_name']", args["test_name"].replace('_', ' '))
     bot.clickOnButton(".//*[@id='submitButton']")
     time.sleep(1)
 
     #Распарсить таблицу с результатами найденных тестов
     #Если результатов больше одного, то нужно спросить пользователя какой тест по номеру нужно пройти
+
     testList = bot.parseTable('//*[@id="skilltestslist"]', 'test_name', "tr")
     testNumber = 1
     if not testList:
@@ -113,7 +114,7 @@ if __name__ == "__main__":
             writeTempFile(bot.doSpeak("{}. {}".format(i+1, testList[i])))
         while True:
             #Ждем пока пользователь не выберет нужный тест
-            file = open("data/botPhrase.txt", 'r')
+            file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'r')
             fileContent = file.readlines()
             if fileContent.count("Test selected.\n"):
                 testNumber = int(fileContent[-1])
@@ -141,7 +142,8 @@ if __name__ == "__main__":
     #Подключем базу данных
     #Поочередно вызываем каждую страничку и если вопрос новый, запишем его в базу данных.
     #Соеденение с базой данных
-    cur, con = connect_or_create('data/upwork_work_version.db')
+
+    cur, con = connect_or_create(os.path.join(os.getcwd(), 'data', 'upwork_work_version.db'))
     #Создадим таблицу Question, если она еще не создана
     try:
         create_table("Qestion", cur, con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")
@@ -220,7 +222,6 @@ if __name__ == "__main__":
                 writeTempFile(bot.doSpeak("Write error."))
                 print "Record error"
                 print "Record to data base error. Detail: {}".format(ex)
-                exit()
             numberAnswer = [random.randint(0, len(text_list[1:])-1)] #Случайный ответ, если не знаем, что отвечать
 
         #ЭТАП ОТВЕТА НА ВОПРОСЫ

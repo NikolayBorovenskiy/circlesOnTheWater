@@ -170,7 +170,8 @@ class Bot(object):
 
 
 def writeTempFile(text):
-    file = open("./data/botPhrase.txt", 'a+')
+
+    file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'a+')
     file.write("\n{}".format(text))
     file.close()
 

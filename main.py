@@ -166,16 +166,17 @@ class StartTestDialog(wx.Dialog):
         test = self.fieldTestName.GetValue()
         try:
             _, userName, email, password = filter_table("User", _cur, "USERNAME", None, [user])[0]
-            file = open("data/botPhrase.txt", 'w')
+            file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'w')
             file.write('Hello!')
             file.close()
         except IndexError:
             print "IndexError"
         #Создание нового потока программы
         #Запустить скрипт в другом потоке
-        if validation(test, REG_TEST_NAME) and user:   
-            t1 = Thread(target=execute, args=("python core.py --test_name {} --user_name {} --email {} --password {}",
-                                                test,
+        if validation(test, REG_TEST_NAME) and user:
+            pathToScript = 'python {}'.format(os.path.join(os.getcwd(), 'core.py'))
+            t1 = Thread(target=execute, args=(pathToScript + " --test_name {} --user_name {} --email {} --password {}",
+                                                test.replace(' ', '_'),
                                                 userName.replace(' ', '_'),
                                                 email,
                                                 password.replace(';', '\;')))
@@ -344,7 +345,7 @@ class StartPanel(wx.Panel):
         allTestsBtn = wx.Button(self, -1, "TESTS", (20, 100), (175, 50))
 
         #Добавим картинку
-        self.bitmap = wx.Bitmap('images/upwork.png')
+        self.bitmap = wx.Bitmap(os.path.join(os.getcwd(), 'images', 'upwork.png'))
         wx.EVT_PAINT(self, self.OnPaint)
 
         #Обработчик события нажатия на кнопку
@@ -389,11 +390,11 @@ class TestPanel(wx.Panel):
 
     #----------------------------------------------------------------------
     def OnTimer(self, event):
-        if os.path.getsize("data/botPhrase.txt")!=self.fileSize:
-            file = open("data/botPhrase.txt", 'r')
+        if os.path.getsize(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'))!=self.fileSize:
+            file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'r')
             fileContent = file.readlines()
             self.logger.SetValue(('\n'.join(fileContent[::-1])).replace('\n\n', '\n'))
-            self.fileSize = os.path.getsize("data/botPhrase.txt")
+            self.fileSize = os.path.getsize(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'))
  
             #Условие, когда нашло несколько тестов и нужно выбрать какой-то один
             if fileContent.count("I found a few tests.\n") and not fileContent.count("Test selected.\n"):
@@ -503,7 +504,12 @@ class AllTestsPanel(wx.Panel):
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             #Этап сохранения файла по отдельному тесту в doc
+            #try:
             saveInFile(filter_table("Qestion", _cur, "TEST", None, [userInfo]), path)
+            #except Exception as ex:
+            #    print ex
+            #    filetemp.write(ex)
+            #    filetemp.close()
         dlg.Destroy()
 
     #-----------------------------------------------------------------------------------
@@ -511,6 +517,7 @@ class AllTestsPanel(wx.Panel):
         """
         Create and show the Open FileDialog
         """
+        currentPath = os.getcwd()
         dlg = wx.FileDialog(
             self, message="Choose a file",
             defaultDir=self.currentDirectory, 
@@ -522,7 +529,7 @@ class AllTestsPanel(wx.Panel):
             paths = dlg.GetPaths()
             print "You chose the following file(s):"
             for path in paths:
-                parse_docx(get_docx_text(path))
+                parse_docx(get_docx_text(path), currentPath)
         dlg.Destroy()
 
     #-----------------------------------------------------------------------------------
@@ -585,7 +592,6 @@ class UserPanel(wx.Panel):
         userInfo = self.allUsers.GetString(self.index)
         if userInfo:
             self.deleteBtn.Enable()
-        print userInfo, type(str(userInfo))
         try:
             _, userName, email, password = filter_table("User", _cur, "USERNAME", None, [userInfo])[0]
             self.userInfoText.SetLabel("Name: {}\nEmail: {}\nPassword: {}".format(userName, email, password))
@@ -682,13 +688,18 @@ class App(wx.App):
 # Run the program
 if __name__ == "__main__":  
     #User validation
-    authorization(MAC_ADDRESS)
+    #authorization(MAC_ADDRESS)
 
     wildcard = "Document source (*.doc)|*.docx|" \
                 "All files (*.*)|*.*"
 
+    try:
+        os.mkdir(os.path.join(os.getcwd(), 'data'))
+    except OSError:
+        print "Directory 'data' already create"
+    path = os.path.join(os.getcwd(), 'data', 'upwork_work_version.db')
     #Подключимся к базе данных
-    _cur, _con = connect_or_create('data/upwork_work_version.db')
+    _cur, _con = connect_or_create(path)
 
     #Создадим таблицу User, если она еще не создана
     try:
