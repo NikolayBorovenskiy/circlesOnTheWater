@@ -82,6 +82,8 @@ def get_macaddress(host='localhost'):
 #Авторизация программы через мак-адресс. Т.е. запускать на компьтерах с опредленных мак-адрессом.
 def authorization(data, iface='eth0'):
     print sys.platform
+    print getmac(iface)
+    mac = None
     if sys.platform == "win32":
         mac = get_macaddress(host='localhost')
     if sys.platform == "linux2":
@@ -145,7 +147,6 @@ def saveInFile(data, path):
     document.save('{}.docx'.format(path))
     return "File success write."
 
-
 #Запустить скрипт
 def execute(command, *args, **kwargs):
     os.system(command.format(*args, **kwargs))
@@ -206,6 +207,7 @@ PARA = WORD_NAMESPACE + 'p'
 TEXT = WORD_NAMESPACE + 't'
 
 def get_docx_text(path):
+    pass
     """
     Take the path of a docx file as argument, return the text in unicode.
     """
@@ -228,7 +230,7 @@ def get_docx_text(path):
 def parse_docx(data, currentPath):
 
     #Подключимся к базе данных
-    path = os.path.join(currentPath, 'data', 'upwork_work_version.db')
+    path = os.path.join(currentPath, 'AppUpwork', 'data', 'upwork_work_version.db')
     print path
     #print
     cur, con = connect_or_create(path)

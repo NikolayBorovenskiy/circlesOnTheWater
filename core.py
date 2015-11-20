@@ -114,7 +114,7 @@ if __name__ == "__main__":
             writeTempFile(bot.doSpeak("{}. {}".format(i+1, testList[i])))
         while True:
             #Ждем пока пользователь не выберет нужный тест
-            file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'r')
+            file = open(os.path.join(os.getcwd(), 'AppUpwork', 'data', 'botPhrase.txt'), 'r')
             fileContent = file.readlines()
             if fileContent.count("Test selected.\n"):
                 testNumber = int(fileContent[-1])
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     #Поочередно вызываем каждую страничку и если вопрос новый, запишем его в базу данных.
     #Соеденение с базой данных
 
-    cur, con = connect_or_create(os.path.join(os.getcwd(), 'data', 'upwork_work_version.db'))
+    cur, con = connect_or_create(os.path.join(os.getcwd(), 'AppUpwork', 'data', 'upwork_work_version.db'))
     #Создадим таблицу Question, если она еще не создана
     try:
         create_table("Qestion", cur, con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")

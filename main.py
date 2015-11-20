@@ -11,7 +11,7 @@ from time import *
 from utils.common import *
 from utils.SQlite3 import *
 from utils.models import *
-from utils.constants import MAC_ADDRESS, REG_EMAIL, REG_LOGIN, REG_PASSORD, REG_TEST_NAME 
+from utils.constants import MAC_ADDRESS, REG_EMAIL, REG_LOGIN, REG_PASSORD, REG_TEST_NAME
 
 
 #===================================================================================================
@@ -30,13 +30,13 @@ class ChoseTestDialog(wx.Dialog):
 
         #Поле ввода логина пользователя
         self.labelInfo = wx.StaticText(self, label="Which test you want to pass?")
-        
+
         self.allFindedTests = wx.ListBox(self, 26, wx.Point(170,10), wx.Size(290,250), [i.replace('\n', '') for i in tests], wx.LB_SINGLE)
         self.Bind(wx.EVT_LISTBOX, self.OnSelect, id=26)
-    
+
         self.okButton = wx.Button(self, label="OK", id=wx.ID_OK)
         self.Bind(wx.EVT_BUTTON, self.onOK, id=wx.ID_OK)
-            
+
         self.mainSizer.Add(self.labelInfo, 0, wx.ALL, 8 )
         self.mainSizer.Add(self.allFindedTests, 0, wx.ALL, 8 )
         self.buttonSizer.Add(self.okButton, 0, wx.ALIGN_CENTER, 20 )
@@ -57,7 +57,7 @@ class ChoseTestDialog(wx.Dialog):
     #----------------------------------------------------------------------
     def OnSelect(self, event):
         self.index = event.GetSelection()
-        
+
 
 #===================================================================================================
 class NewUserDialog(wx.Dialog):
@@ -70,7 +70,7 @@ class NewUserDialog(wx.Dialog):
         #Поле ввода логина пользователя
         self.labelLogin = wx.StaticText(self, label="Enter user name:")
         self.fieldLogin = wx.TextCtrl(self, value="", size=(300, 30))
-        
+
         #Поле ввода почты пользователя
         self.labelEmail = wx.StaticText(self, label="Enter email:")
         self.fieldEmail = wx.TextCtrl(self, value="", size=(300, 30))
@@ -95,7 +95,7 @@ class NewUserDialog(wx.Dialog):
         self.mainSizer.Add(self.buttonSizer, 0, wx.ALIGN_CENTER|wx.ALIGN_BOTTOM, 0)
 
         self.Bind(wx.EVT_BUTTON, self.onOK, id=wx.ID_OK)
-        self.Bind(wx.EVT_BUTTON, self.onCancel, id=wx.ID_CANCEL)
+        self.Bind(wx.EVT_BUTTON, self.onCancel, id=wx.ID_NO)
 
         self.SetSizer(self.mainSizer)
         self.result = None
@@ -113,12 +113,12 @@ class NewUserDialog(wx.Dialog):
             self.result.append(login)
             self.result.append(email)
             self.result.append(password)
-            self.Destroy()
+            self.Close()
 
     #----------------------------------------------------------------------
     def onCancel(self, event):
         self.result = None
-        self.Destroy()
+        self.Close()
 
 
 #===================================================================================================
@@ -132,11 +132,11 @@ class StartTestDialog(wx.Dialog):
         #Поле ввода названия теста
         self.labelTestName = wx.StaticText(self, label="Enter test name")
         self.fieldTestName = wx.TextCtrl(self, value="", size=(300, 30))
-        
+
         #Поле ввода пользователя
         self.labelUser = wx.StaticText(self, label="Chose user")
         self.listUser = wx.ComboBox(self, -1, pos=(50, 170), size=(300, -1), choices=[i[0] for i in show_table("User", _cur, "USERNAME")], style=wx.CB_READONLY)
-        self.okButton = wx.Button(self, label="GO", id=wx.ID_OK)
+        self.okButton = wx.Button(self, label="GO", id=wx.ID_YES)
         self.cancelButton = wx.Button(self, label="CANCEL", id=wx.ID_CANCEL)
 
         self.mainSizer.Add(self.labelTestName, 0, wx.ALL, 8 )
@@ -149,45 +149,54 @@ class StartTestDialog(wx.Dialog):
 
         self.mainSizer.Add(self.buttonSizer, 0, wx.ALIGN_CENTER|wx.ALIGN_BOTTOM, 0)
 
-        self.Bind(wx.EVT_BUTTON, self.onOK, id=wx.ID_OK)
-        self.Bind(wx.EVT_BUTTON, self.onCancel, id=wx.ID_CANCEL)
+        self.Bind(wx.EVT_BUTTON, self.pressOK, id=wx.ID_YES)
+        self.Bind(wx.EVT_BUTTON, self.onCancel, id=wx.ID_NO)
 
         self.SetSizer(self.mainSizer)
         self.result = None
 
     #----------------------------------------------------------------------
-    def onOK(self, event):
+    def pressOK(self, event):
         global _timer
         _timer.Start(2000)
-    
         #Достать пользователя из базы данных
         global _cur, _con
-        user = self.listUser.GetValue()
-        test = self.fieldTestName.GetValue()
         try:
-            _, userName, email, password = filter_table("User", _cur, "USERNAME", None, [user])[0]
-            file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'w')
-            file.write('Hello!')
-            file.close()
-        except IndexError:
-            print "IndexError"
+            user = self.listUser.GetValue()
+        except:
+            pass
+        test = self.fieldTestName.GetValue()
+
         #Создание нового потока программы
         #Запустить скрипт в другом потоке
         if validation(test, REG_TEST_NAME) and user:
+            try:
+                _, userName, email, password = filter_table("User", _cur, "USERNAME", None, [user])[0]
+                file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'w')
+                file.write('Hello!')
+                file.close()
+            except IndexError:
+                print "IndexError"
+            file = open("/Users/nikolay/AppUpwork/Phrase.txt", 'a+')
+
+
             pathToScript = 'python {}'.format(os.path.join(os.getcwd(), 'core.py'))
+            file.write("{}".format(pathToScript))
+            file.close()
+
             t1 = Thread(target=execute, args=(pathToScript + " --test_name {} --user_name {} --email {} --password {}",
                                                 test.replace(' ', '_'),
                                                 userName.replace(' ', '_'),
                                                 email,
                                                 password.replace(';', '\;')))
-            
+
             t1.start()
-            self.Destroy()
+            self.Close()
 
     #----------------------------------------------------------------------
     def onCancel(self, event):
         self.result = None
-        self.Destroy()
+        self.Close()
 
 
 #===================================================================================================
@@ -264,10 +273,10 @@ class UpperPanelSolving(wx.Panel):
         self.sizerMoreOneAnswer.Add(moreOneAnswer, 1, wx.CENTER)
 
         self.sizer.Add(self.sizerQuestion, 0, wx.ALIGN_CENTER|wx.ALIGN_BOTTOM, 0)
-        self.sizer.Add(self.sizerMoreOneAnswer, 0, wx.ALIGN_LEFT|wx.ALIGN_BOTTOM, 0)       
+        self.sizer.Add(self.sizerMoreOneAnswer, 0, wx.ALIGN_LEFT|wx.ALIGN_BOTTOM, 0)
 
         answersList = self.questionObj.answers.split('#~')
-    
+
         #определяем номер правильного ответа, которые есть в базе, зная текст ответа. Это делается для надежности в реальных условиях
         numberAnswer = []
         for correct in self.questionObj.correctAnswer.split('#~'):
@@ -277,7 +286,7 @@ class UpperPanelSolving(wx.Panel):
                     numberAnswer.append([i.strip() for i in self.questionObj.answers.split('#~')].index(correct.strip()))
             except IndexError as ex:
                 print "Error. Detail: {}".format(ex)
-      
+
         for i in range(len(answersList)):
             cb = wx.CheckBox(self, -1, '')
             if i in numberAnswer:
@@ -322,7 +331,7 @@ class ButtonPanelSolving(wx.Panel):
 
         self.backBtn = wx.Button(self, id=31,label="BACK",  size = (130, 35))
         self.backBtn.Bind(wx.EVT_BUTTON, self.GetParent().upperPanel.Change)
-          
+
         self.nextBtn = wx.Button(self, id=30, label="NEXT",  size = (130, 35))
         self.nextBtn.Bind(wx.EVT_BUTTON, self.GetParent().upperPanel.Change)
 
@@ -330,7 +339,7 @@ class ButtonPanelSolving(wx.Panel):
         self.sizer.Add(self.backBtn, 0, wx.ALL, 20)
         self.sizer.Add(self.saveBtn, 0, wx.ALL, 20)
         self.sizer.Add(self.nextBtn, 0, wx.ALL, 20)
-        self.SetSizerAndFit(self.sizer)     
+        self.SetSizerAndFit(self.sizer)
 
 
 #===================================================================================================
@@ -384,8 +393,6 @@ class TestPanel(wx.Panel):
                 wx.Point(160,10), wx.Size(330,330),
                 wx.TE_MULTILINE | wx.TE_READONLY)
 
-        #Обработчик события нажатия на кнопку
-        self.startBtn.Bind(wx.EVT_BUTTON, self.OnShowCustomDialog)
         self.Bind(wx.EVT_TIMER, self.OnTimer, id=1)
 
     #----------------------------------------------------------------------
@@ -395,7 +402,7 @@ class TestPanel(wx.Panel):
             fileContent = file.readlines()
             self.logger.SetValue(('\n'.join(fileContent[::-1])).replace('\n\n', '\n'))
             self.fileSize = os.path.getsize(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'))
- 
+
             #Условие, когда нашло несколько тестов и нужно выбрать какой-то один
             if fileContent.count("I found a few tests.\n") and not fileContent.count("Test selected.\n"):
                 choseTestDia = ChoseTestDialog(self, -1, 'Select test',  fileContent[fileContent.index("I found a few tests.\n")+1:])
@@ -420,6 +427,8 @@ class AllTestsPanel(wx.Panel):
         wx.Panel.__init__(self, parent=parent)
         self.currentDirectory = os.getcwd()
         self.index = None
+        self.wildcard = "Document source (*.doc)|*.docx|" \
+                "All files (*.*)|*.*"
 
         global _timer2, _cur, _con
         _timer2 = wx.Timer(self, 3)
@@ -446,13 +455,13 @@ class AllTestsPanel(wx.Panel):
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.DeleteTest)
 
         self.Bind(wx.EVT_TIMER, self.OnTimer, id=3)
-        
+
         self.allTest = None
         seen = set()
         self.allTestsListBox = wx.ListBox(self, 26, wx.Point(170,10), wx.Size(290,250), [], wx.LB_SINGLE)
         #Панелька для короткий информации по каждому тесту
         self.testInfoText = wx.StaticText(self, -1, '', pos=(190,270), size=(200, 130), style=wx.TE_MULTILINE)
-        
+
         #Обработчик события нажатия на кнопку
         self.Bind(wx.EVT_LISTBOX, self.OnSelect, id=26)
 
@@ -475,8 +484,8 @@ class AllTestsPanel(wx.Panel):
 
         allQestion = filter_table("Qestion", _cur, "TEST", None, [userInfo])
         unAnswered = [i for i in filter_table("Qestion", _cur, "TEST", None, [userInfo]) if i[4]!='No answer' and i[4]!='']
-        self.testInfoText.SetLabel("Total: {}\nAnswered: {}\nUnanswered: {}".format(len(allQestion), 
-                                                                                    len(unAnswered), 
+        self.testInfoText.SetLabel("Total: {}\nAnswered: {}\nUnanswered: {}".format(len(allQestion),
+                                                                                    len(unAnswered),
                                                                                     len(allQestion) - len(unAnswered)))
 
     def OnTimer(self, event):
@@ -489,27 +498,25 @@ class AllTestsPanel(wx.Panel):
             self.deleteBtn.Disable()
             global _timer2
             _timer2.Stop()
-            
+
     #-----------------------------------------------------------------------------------
     def saveFile(self, event):
         """
         Create and show the Save FileDialog
         """
+        global _cur, _con
         userInfo = self.allTestsListBox.GetString(self.index)
         dlg = wx.FileDialog(
-            self, message="Save file as ...", 
-            defaultDir=self.currentDirectory, 
-            defaultFile="", wildcard=wildcard, style=wx.SAVE
+            self, message="Save file as ...",
+            defaultDir=self.currentDirectory,
+            defaultFile="", wildcard=self.wildcard, style=wx.SAVE
             )
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
-            #Этап сохранения файла по отдельному тесту в doc
-            #try:
-            saveInFile(filter_table("Qestion", _cur, "TEST", None, [userInfo]), path)
-            #except Exception as ex:
-            #    print ex
-            #    filetemp.write(ex)
-            #    filetemp.close()
+            try:
+                saveInFile(filter_table("Qestion", _cur, "TEST", None, [userInfo]), path)
+            except Exception as ex:
+                pass
         dlg.Destroy()
 
     #-----------------------------------------------------------------------------------
@@ -520,9 +527,9 @@ class AllTestsPanel(wx.Panel):
         currentPath = os.getcwd()
         dlg = wx.FileDialog(
             self, message="Choose a file",
-            defaultDir=self.currentDirectory, 
+            defaultDir=self.currentDirectory,
             defaultFile="",
-            wildcard=wildcard,
+            wildcard=self.wildcard,
             style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR
             )
         if dlg.ShowModal() == wx.ID_OK:
@@ -572,8 +579,8 @@ class UserPanel(wx.Panel):
     #-----------------------------------------------------------------------------------
     def OnTimer1(self, event):
         self.allUsers.Set([i[0] for i in show_table("User", _cur, "USERNAME")])
-    
-    #-----------------------------------------------------------------------------------   
+
+    #-----------------------------------------------------------------------------------
     def OnShowCustomDialog(self, event):
         global _timer1, _cur, _con
         _timer1.Start(2000)
@@ -611,11 +618,12 @@ class UserPanel(wx.Panel):
 class MainFrame(wx.Frame):
     #-----------------------------------------------------------------------------------
     def __init__(self, parent, title):
-        no_resize = wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | 
-                                                wx.RESIZE_BOX | 
+        no_resize = wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER |
+                                                wx.RESIZE_BOX |
                                                 wx.MAXIMIZE_BOX)
 
         wx.Frame.__init__(self, parent, -1, title, pos=(400, 150), size=(500, 350), style=no_resize)
+        initialization()
         self.Center()
         self.colur = wx.Colour(0, 0, 0)
 
@@ -661,7 +669,7 @@ class MainFrame(wx.Frame):
     def onSwitchTestPanel(self, event):
         self.panelTest.Show()
         self.panelUsers.Hide()
-        self.panelStart.Hide() 
+        self.panelStart.Hide()
         self.panelAllTests.Hide()
         self.Layout()
 
@@ -685,35 +693,30 @@ class App(wx.App):
         return True
 
 
-# Run the program
-if __name__ == "__main__":  
+def initialization():
     #User validation
     #authorization(MAC_ADDRESS)
-
-    wildcard = "Document source (*.doc)|*.docx|" \
-                "All files (*.*)|*.*"
 
     try:
         os.mkdir(os.path.join(os.getcwd(), 'data'))
     except OSError:
         print "Directory 'data' already create"
+
     path = os.path.join(os.getcwd(), 'data', 'upwork_work_version.db')
-    #Подключимся к базе данных
+    global _cur, _con
     _cur, _con = connect_or_create(path)
 
     #Создадим таблицу User, если она еще не создана
     try:
-        print create_table("User", _cur, _con, USERNAME = "TEXT", EMAIL = "TEXT", PASSWORD = "TEXT")
-    except:
-        print "Table 'User' already create."
-
-    #Создадим таблицу Question, если она еще не создана
-    try:
+        create_table("User", _cur, _con, USERNAME = "TEXT", EMAIL = "TEXT", PASSWORD = "TEXT")
         create_table("Qestion", _cur, _con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")
     except:
-        print "Table 'Qestion' already create."
+        print "Tables already create."
 
-    _timer, _timer1, _timer2 = None, None, None
+
+# Run the program
+if __name__ == "__main__":
+    _timer, _timer1, _timer2, _cur, _con = None, None, None, None, None
 
     app = App()
     app.MainLoop()
