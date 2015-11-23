@@ -240,7 +240,7 @@ class UpperPanelSolving(wx.Panel):
         if e.Id == 31:
             self.counter-=1
         if self.counter<1:
-           self.GetParent().Destroy()
+           self.GetParent().Close()
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizerQuestion = wx.BoxSizer(wx.VERTICAL)
@@ -257,7 +257,7 @@ class UpperPanelSolving(wx.Panel):
         try:
             self.questionObj = Qestion(*(list(filter_table("Qestion", _cur, "TEST", None, [self.testName])[self.counter-1]))[1:])
         except IndexError:
-            self.GetParent().Destroy()
+            self.GetParent().Close()
 
         questionText = wx.StaticText(self, -1, '', style=wx.TE_MULTILINE)
         questionText.SetLabel("{}. {}\n".format(self.counter, hyphenation(self.questionObj.qestionText)))
