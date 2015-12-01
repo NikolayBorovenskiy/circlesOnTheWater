@@ -177,13 +177,7 @@ class StartTestDialog(wx.Dialog):
                 file.close()
             except IndexError:
                 print "IndexError"
-            file = open("/Users/nikolay/AppUpwork/Phrase.txt", 'a+')
-
-
             pathToScript = 'python {}'.format(os.path.join(os.getcwd(), 'core.py'))
-            file.write("{}".format(pathToScript))
-            file.close()
-
             t1 = Thread(target=execute, args=(pathToScript + " --test_name {} --user_name {} --email {} --password {}",
                                                 test.replace(' ', '_'),
                                                 userName.replace(' ', '_'),

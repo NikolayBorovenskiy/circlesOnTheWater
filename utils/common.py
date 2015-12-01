@@ -138,7 +138,7 @@ def saveInFile(data, path):
         for answer in record[3].split('#~'):
             counterAnswer+=1
             #Выделяем правильный ответ жирны
-            if answer in record[4].split('#~'):
+            if answer.strip() in [item.strip() for item in record[4].split('#~')]:
                 p = document.add_paragraph("")
                 p.add_run("\n{}. {}".format(counterAnswer, answer)).bold = True
             else:
