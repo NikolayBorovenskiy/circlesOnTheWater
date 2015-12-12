@@ -84,6 +84,8 @@ cur, con = connect_or_create('upwork.db')
 '''
 
 cur, con = connect_or_create('data/upwork_work_version.db')
+
+
 delete_record("Qestion", cur, con, "ID", [172])
 for i in filter_table("Qestion", cur, "TEST", None, ["Python Test"]):
     if i[0]==172 or i[0]==195:

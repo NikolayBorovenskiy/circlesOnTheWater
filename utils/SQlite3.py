@@ -29,9 +29,16 @@ def create_table(tableName, cursor, connection, **kwargs):
 
 #Записать данные в таблицу. Одну запись
 def save_records(tableName, cursor, connection, dataList):
-	#ID определяется автоматически
 	tempDataList = dataList[:]
-	tempDataList.insert(0,len(cursor.execute('SELECT * FROM {}'.format(tableName)).fetchall()))
+	#Определение ID. Исключаю появление одинаковых ID в базе данных.
+	newId = 0
+	idList = [i[0] for i in cursor.execute('SELECT * FROM {}'.format(tableName)).fetchall()]
+	while True:
+	    if newId in idList:
+	        newID+=1
+	    else:
+	        break
+	tempDataList.insert(0,newId)
 	
 	#Преобразование значения к булевому виду, если тип поля будевый
 	cursor.execute('PRAGMA TABLE_INFO({})'.format(tableName))
