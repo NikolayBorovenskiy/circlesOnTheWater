@@ -33,12 +33,12 @@ class Qestion(object):
             #count+=1
             #print " {}. {}.".format(count, answer)
 
-        #Правильных ответов может быть нескольно на один ворос
+        #Correct answers can be somewhat one question
         #raw_input("Which answer is correct?\n")
         #self.correctAnswer = [self.answers.split('#~')[int(i)-1] for i in raw_input("Which answer is correct?\n")]
         self.correctAnswer = [self.answers.split('#~')[int(i)-1] for i in corrects]
 
-    #Метод, которым представит класс в виде строки. Это будет удобно потом для записи в базу данных.
+    #The method by which to introduce the class as a string. It is convenient then to write to the database.
     def __str__(self):
         return "{}&; {}&; {}&; {}&; {}".format(self.testName, self.qestionText, self.answers, self.correctAnswer, self.moreOneAnswer)
         #return "{}; {}; {}; {}".format(self.testName, self.qestionText, '#~'.join(self.answers), self.correctAnswer)
@@ -86,7 +86,7 @@ class Bot(object):
 
 
     def checkLocation(self, titleText, location):
-        #Проверка, что бот на странице своего аккаунта
+        #Check that the robot is on the page of your account
         if self.driver.title == titleText:
             return self.doSpeak("I am on {} page!".format(location))
         else:

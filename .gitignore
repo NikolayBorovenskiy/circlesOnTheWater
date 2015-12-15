@@ -6,3 +6,4 @@ utils/constants.py
 *.py~
 *.txt~
 upwork_work_version.db
+logs/

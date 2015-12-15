@@ -23,18 +23,14 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(
         description='''
         Script implements following processes:
-            - coloring model on the scene according to the resulting model;
-            - convert .PCD frames in .PNG frames;
-            - video recording of .PNG frames;
-            CMD example: image_video_processing.py 
-                         --scene-path ~/Downloads/seq_real_milk_hand 
-                         --model-path results-actual/ 
-                         --results-path ./ 
-                         --colorize-path colorize/build/colorize_objects_scene 
-                         --save-png save_png/build/png_write 
-                         --algorithm Nearest 
-                         --nearest_coef 10 
-                         --png_mode rgb
+            - creating a robot to pass tests for Upwork;
+            - database connection;
+            - work with the database (read and write);
+            CMD example: python core.py
+                        --test_name your_test_name
+                        --user_name your_user_name
+                        --email your_email
+                        --password your_password
             '''
         )
 
@@ -64,47 +60,47 @@ if __name__ == "__main__":
 
     args = vars(ap.parse_args())
 
-    #Создание бота!!!
+    #Making bot !!!
     bot = Bot("Anny")
     bot.start("https://www.upwork.com/")
     #bot.start("http://whatismyipaddress.com/")
 
-    #Проверить где бот
+    #Check where bot
     
     writeTempFile(bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing"))
     locationControl(bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing"))
-    #Переход на страницу логирования
+    #Go to login page
     bot.clickOnButton("html/body/div[1]/div/header/div[1]/div[2]/nav/ul[2]/li[2]/a")
-    #Проверить где бот
+    #Check where bot
     writeTempFile(bot.checkLocation("Log In - Upwork", "login"))
     locationControl(bot.checkLocation("Log In - Upwork", "login"))
-    #Заполнить поле с логином и паролем
+    #Fill the box with login and password
     bot.writeField(".//*[@id='login_username']", args["email"])
     bot.writeField(".//*[@id='login_password']", args["password"])
    
-    #Залогиниться
+    #login
     bot.clickOnButton(".//*[@id='layout']/div[1]/div/form/div[3]/div[1]/button")
-    #Проверить где бот
+    #Check where bot
     writeTempFile(bot.checkLocation("Find Jobs - Upwork", "my"))
     locationControl(bot.checkLocation("Find Jobs - Upwork", "my"))
-    #Переход на страницу с тестами
+    #Go to the page with the tests
     bot.clickOnButton("html/body/header/div/div[3]/nav/ul/li[6]/a")
-    #Проверить где бот
+    #Check where bot
     writeTempFile(bot.checkLocation("Qualification Tests for Freelancers & Programmers - Certifications for Outsourcing - Upwork", "tests"))
     locationControl(bot.checkLocation("Qualification Tests for Freelancers & Programmers - Certifications for Outsourcing - Upwork", "tests"))
-    #Поиск нужного теста. В данном случае это тесты по python
+    #Finding text.
     bot.writeField(".//*[@id='filter_name']", args["test_name"].replace('_', ' '))
     bot.clickOnButton(".//*[@id='submitButton']")
     time.sleep(1)
 
-    #Распарсить таблицу с результатами найденных тестов
-    #Если результатов больше одного, то нужно спросить пользователя какой тест по номеру нужно пройти
+    #Parse a table with the results of the tests found
+    #If the result is is more than one then you need to ask the user which test should pass
 
     testList = bot.parseTable('//*[@id="skilltestslist"]', 'test_name', "tr")
     testNumber = 1
     if not testList:
         writeTempFile(bot.doSpeak("I can't find your test. Sorry."))
-        #Дело сделано, закрываем браузер
+        #It is done, close the browser
         bot.finish()
         sys.exit()
     if len(testList)>1:
@@ -121,58 +117,55 @@ if __name__ == "__main__":
                 print testNumber, 'testNumber'
                 break
 
-    #Выбрать нужный тест или первый, если нашелся один, или какой укажет пользователь
-    #Переход на страницу с тестом
+    #Select the required test, or first, if there was one, or a user will point
+    #Go to the page with the test
     bot.clickOnButton(".//*[@id='skilltestslist']/tbody/tr[{}]/td[1]/a".format(testNumber))
-    #Проверить, где находится бот
+    #Check where bot
     writeTempFile(bot.checkLocation("{} - Upwork".format(testList[testNumber-1]), "{}".format(testList[testNumber-1])))
     locationControl(bot.checkLocation("{} - Upwork".format(testList[testNumber-1]), "{}".format(testList[testNumber-1])))
 
-    #Бот заходит на страницу с тестом Python
     #bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/4/Python%20Test%20-%20Upwork.html')
     #bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/Django%20Test/1/Django%20Test%20-%20Upwork.html')
-    #css
     #bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/css_test/1/CSS%20Test%20-%20Upwork.html')
-    #Заходим на страницу с тестами
+    #Go to the page with the tests
     bot.clickOnButton(".//*[@id='main']/div[3]/div/div[1]/div/a")
-    #Проверить, где находится бот
+    #Check where bot
     writeTempFile(bot.checkLocation("Upwork - Adaptive Skill Test", "Skill Test"))
     locationControl(bot.checkLocation("Upwork - Adaptive Skill Test", "Skill Test"))
 
-    #Подключем базу данных
-    #Поочередно вызываем каждую страничку и если вопрос новый, запишем его в базу данных.
-    #Соеденение с базой данных
-
-    cur, con = connect_or_create(os.path.join(os.getcwd(), 'data', 'upwork_work_version.db'))
-    #Создадим таблицу Question, если она еще не создана
+    #Connecting the database
+    #In turn called every page and if the question is a new one, write it in the database.
+    #Database Connection
+    cur, con = connect_or_create(os.path.join(os.getcwd(), 'data', 'database.db'))
+    #Create the table Question, if it does not exist yet
     try:
         create_table("Qestion", cur, con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")
     except:
         print "Table already create."
 
-    #В ЭТОМ РАЗДЕЛЕ БОТ ОТВЕЧАЕТ НА ВОПРОСЫ
+    #IN THIS SECTION BOT to answer questions
     #for linkToTestPage in linkCSSTest:
     #    bot._getURL(linkToTestPage)
 
     while True:
-        #Попробовать распарсить форму с вопросами
+        #Try to parse a form with questions
         if bot.parseElement('//*[@id="questionForm"]') is "Error":
-            #Формы с вопросами не оказалось
-            #Проверим, что бот тест не сдал сначала
+            #Forms with questions was not
+            #First, check that the test is not passed the bot
             if (bot.parseElement("/html/body/div/div/div[1]/p")).text.find("Sorry, you didn't pass") != -1:
                 writeTempFile(bot.doSpeak("Unfortunately I did not pass the test :(. Score: {}".format(bot.parseElement('/html/body/div/div/div[1]/div/div[1]/ul/li[2]/div[2]').text)))
-            #Возможно он сдал тест
+            #Maybe he passed the test
             elif (bot.parseElement("/html/body/div/div/div[1]/p")).text.find("Congratulations! You've completed") != -1:
                 writeTempFile(bot.doSpeak("Cool! I passed the test successfully :). Score: {}".format(bot.parseElement('/html/body/div/div/div[1]/div/div[1]/ul/li[2]/div[2]').text)))
             else:
-                #Проверить, где находится бот
+                #Check where bot
                 writeTempFile(bot.checkLocation("Upwork - Adaptive Skill Test", "Skill Test"))
                 locationControl(bot.checkLocation("Upwork - Adaptive Skill Test", "Skill Test"))
-            #Дело сделано, закрываем браузер
+            #It is done, close the browser
             bot.finish()
             sys.exit()
 
-        #Проверка на условие, что в вопросе больше чем один правильный ответ. Это бывает не часто
+        #Check on the condition that the question of more than one correct answer.
         if bot.parseElement("/html/body/div/div/div[1]/div/div/form/p[3]", 2) != "Error":
             amountAnswersMoreOne = "True"
             writeTempFile(bot.doSpeak("Attention! The number of correct answers may be more than one."))
@@ -180,10 +173,10 @@ if __name__ == "__main__":
             amountAnswersMoreOne = ''
             writeTempFile(bot.doSpeak("Only one answer is correct."))
 
-        #Парсим форму с вопросами
+        #Parser form with questions
         text_list = bot.parseTable('//*[@id="questionForm"]', None, 'pre')
-        #Проверяем есть ли правильный ответ в базе данных
-        #Запрос к базе данных
+        #Check if there is right answer in the database
+        #Query to the database
         numberAnswer = []
         paramsToNewObj = []
         qestionIS = filter_table("Qestion", cur, "TEST", "QESTION", [testList[testNumber-1], text_list[0]])
@@ -192,18 +185,18 @@ if __name__ == "__main__":
             print "hello hello hello"
             writeTempFile(bot.doSpeak("I know this qestion :)"))
             tempObj = Qestion(*(list(qestionIS[0]))[1:])
-            #Поиск в базе данных правильный ответ
+            #Database search the correct answer
             if tempObj.correctAnswer != 'No answer': #Если есть правильный ответ на вопрос
                 writeTempFile(bot.doSpeak("Bot: I know answer :)"))
-                #определяем номер правильного ответа, которые есть в базе, зная текст ответа. Это делается для надежности в реальных условиях
+                #Determine the number of the correct answer, which is in the database. This is done for reliability in actual
                 for correct in tempObj.correctAnswer.split('#~'):
-                    #номерация с нулевого значения
+                    #numbering from zero
                     numberAnswer.append([i.strip() for i in tempObj.answers.split('#~')].index(correct.strip()))
             else:
                 writeTempFile(bot.doSpeak("Bot: I don't know answer :("))
-                numberAnswer = [random.randint(0, len(text_list[1:])-1)] #Случайный ответ, если не знаешь что отвечать
+                numberAnswer = [random.randint(0, len(text_list[1:])-1)] #Random answer if you do not know what to answer
         else:
-            #Если в базе вопроса нет, то ответ выберется рандомно, а новый вопрос запишеться в базу данных вопросов.
+            #If the question is not in the database, then the answer is randomly selected, and a new question will be written to the database.
             writeTempFile(bot.doSpeak("I don't know this question ..."))
             paramsToNewObj.append(testList[testNumber-1])
             paramsToNewObj.append(text_list[0])
@@ -211,7 +204,7 @@ if __name__ == "__main__":
             paramsToNewObj.append('No answer')
             paramsToNewObj.append(amountAnswersMoreOne)
             print paramsToNewObj
-            #Сохраним запись в базу данных
+            #Save the record in a database
             try:
                 print Qestion(*paramsToNewObj), 'object'
                 print parserModel(Qestion(*paramsToNewObj)), 'parser'
@@ -224,15 +217,15 @@ if __name__ == "__main__":
                 print "Record to data base error. Detail: {}".format(ex)
             numberAnswer = [random.randint(0, len(text_list[1:])-1)] #Случайный ответ, если не знаем, что отвечать
 
-        #ЭТАП ОТВЕТА НА ВОПРОСЫ
-        #Выбор всех правильные ответов на поставленные вопросы
+        #STAGE answers to questions
+        #Select all the correct answers to these questions
         for i in numberAnswer:
-            #Реализация механизма ответа на вопросы теста.
+            #Implementing answer the test questions.
             bot.clickOnButton("/html/body/div/div/div[1]/div/div/form/fieldset/div/div[{}]".format(i+1))
             #time.sleep(3)
 
-        #Подтверждаем ответ
+        #acknowledgment response
         bot.clickOnButton('//*[@id="continue"]')
 
-    #Дело сделано, закрываем браузер
+    #It is done, close the browser
     bot.finish()

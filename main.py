@@ -28,7 +28,7 @@ class ChoseTestDialog(wx.Dialog):
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        #Поле ввода логина пользователя
+        #Input field User login
         self.labelInfo = wx.StaticText(self, label="Which test you want to pass?")
 
         self.allFindedTests = wx.ListBox(self, 26, wx.Point(170,10), wx.Size(290,250), [i.replace('\n', '') for i in tests], wx.LB_SINGLE)
@@ -67,15 +67,15 @@ class NewUserDialog(wx.Dialog):
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        #Поле ввода логина пользователя
+        #Field of user login
         self.labelLogin = wx.StaticText(self, label="Enter user name:")
         self.fieldLogin = wx.TextCtrl(self, value="", size=(300, 30))
 
-        #Поле ввода почты пользователя
+        #Field of user email
         self.labelEmail = wx.StaticText(self, label="Enter email:")
         self.fieldEmail = wx.TextCtrl(self, value="", size=(300, 30))
 
-        #Поле ввода пароля пользователя
+        #Field of user password
         self.labelPassword = wx.StaticText(self, label="Enter password:")
         self.fieldPassword = wx.TextCtrl(self, value="", size=(300, 30))
 
@@ -107,7 +107,7 @@ class NewUserDialog(wx.Dialog):
         login = self.fieldLogin.GetValue()
         email = self.fieldEmail.GetValue()
         password = self.fieldPassword.GetValue()
-        #Валидация введенных данных
+        #Validation of entered data
         if validation(login, REG_LOGIN) and validation(email, REG_EMAIL) and validation(password, REG_PASSORD):
             self.result = []
             self.result.append(login)
@@ -129,11 +129,11 @@ class StartTestDialog(wx.Dialog):
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        #Поле ввода названия теста
+        #Input field name test
         self.labelTestName = wx.StaticText(self, label="Enter test name")
         self.fieldTestName = wx.TextCtrl(self, value="", size=(300, 30))
 
-        #Поле ввода пользователя
+        #Input field user
         self.labelUser = wx.StaticText(self, label="Chose user")
         self.listUser = wx.ComboBox(self, -1, pos=(50, 170), size=(300, -1), choices=[i[0] for i in show_table("User", _cur, "USERNAME")], style=wx.CB_READONLY)
         self.okButton = wx.Button(self, label="GO", id=wx.ID_YES)
@@ -159,17 +159,19 @@ class StartTestDialog(wx.Dialog):
     def pressOK(self, event):
         global _timer
         _timer.Start(2000)
-        #Достать пользователя из базы данных
+        #Control the user from the database
         global _cur, _con
+        user = None
         try:
             user = self.listUser.GetValue()
         except:
             pass
         test = self.fieldTestName.GetValue()
 
-        #Создание нового потока программы
-        #Запустить скрипт в другом потоке
+        #Creating a new program stream
+        #Run the script in a different thread
         if validation(test, REG_TEST_NAME) and user:
+            userName, email, password = None
             try:
                 _, userName, email, password = filter_table("User", _cur, "USERNAME", None, [user])[0]
                 file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'w')
@@ -177,15 +179,15 @@ class StartTestDialog(wx.Dialog):
                 file.close()
             except IndexError:
                 print "IndexError"
-            pathToScript = 'python {}'.format(os.path.join(os.getcwd(), 'core.py'))
-            t1 = Thread(target=execute, args=(pathToScript + " --test_name {} --user_name {} --email {} --password {}",
-                                                test.replace(' ', '_'),
-                                                userName.replace(' ', '_'),
-                                                email,
-                                                password.replace(';', '\;')))
-
-            t1.start()
-            self.Close()
+            if (userName or email) and password:
+                pathToScript = 'python {}'.format(os.path.join(os.getcwd(), 'core.py'))
+                t1 = Thread(target=execute, args=(pathToScript + " --test_name {} --user_name {} --email {} --password {}",
+                                                    test.replace(' ', '_'),
+                                                    userName.replace(' ', '_'),
+                                                    email,
+                                                    password.replace(';', '\;')))
+                t1.start()
+                self.Close()
 
     #----------------------------------------------------------------------
     def onCancel(self, event):
@@ -199,9 +201,6 @@ class SolvingDialog(wx.Dialog):
         wx.Dialog.__init__(self, parent, id, title, size=(700, 540),
                             style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
-        #size = self.GetSize()
-        #self.SetSizeHints(minW=size.GetWidth(), minH=size.GetHeight(),
-        #                  maxW=size.GetWidth())
         self.testName = testName
         self.upperPanel = UpperPanelSolving(self)
         self.buttonPanel = ButtonPanelSolving(self)
@@ -228,7 +227,7 @@ class UpperPanelSolving(wx.Panel):
     #----------------------------------------------------------------------
     def Change(self, e=None):
         #global _cur, _con
-        #Слушаю какая кнопка нажата - Next или Back, если вопросов нет, но убираем панельку
+        #Listening to what the button is pressed - Next or Back, if the questions asked, but hide the panel.
         if e.Id == 30:
             self.counter+=1
         if e.Id == 31:
@@ -258,7 +257,7 @@ class UpperPanelSolving(wx.Panel):
         self.subs.append(questionText)
         self.sizerQuestion.Add(questionText, 1, wx.CENTER)
 
-        #Надпись в форме, что ответов может быть больше одного
+        #The inscription in the form of the answer may be more than one
         moreOneAnswer = wx.StaticText(self, -1, '', style=wx.TE_MULTILINE)
         if self.questionObj.moreOneAnswer:
             moreOneAnswer.SetLabel("more than one answers")
@@ -271,10 +270,10 @@ class UpperPanelSolving(wx.Panel):
 
         answersList = self.questionObj.answers.split('#~')
 
-        #определяем номер правильного ответа, которые есть в базе, зная текст ответа. Это делается для надежности в реальных условиях
+        #determine the number of the correct answer, which is in the database, knowing your reply. This is done for reliability in real
         numberAnswer = []
         for correct in self.questionObj.correctAnswer.split('#~'):
-            #номерация с нулевого значения
+            #numbering from zero
             try:
                 if correct!='No answer' and correct:
                     numberAnswer.append([i.strip() for i in self.questionObj.answers.split('#~')].index(correct.strip()))
@@ -347,16 +346,16 @@ class StartPanel(wx.Panel):
         profilesBtn = wx.Button(self, -1, "USERS", (20, 40), (175, 50))
         allTestsBtn = wx.Button(self, -1, "TESTS", (20, 100), (175, 50))
 
-        #Добавим картинку
+        #add picture
         self.bitmap = wx.Bitmap(os.path.join(os.getcwd(), 'images', 'upwork.png'))
         wx.EVT_PAINT(self, self.OnPaint)
 
-        #Обработчик события нажатия на кнопку
+        #The event handler pressing
         profilesBtn.Bind(wx.EVT_BUTTON, parent.onSwitchUserPanel)
         #passTestBtn.Bind(wx.EVT_BUTTON, parent.onSwitchTestPanel)
         allTestsBtn.Bind(wx.EVT_BUTTON, parent.onSwitchAllTestsPanel)
 
-    #Рисовалка картинки
+    #Draw a picture
     #----------------------------------------------------------------------
     def OnPaint(self, event):
         dc = wx.PaintDC(self)
@@ -372,7 +371,7 @@ class TestPanel(wx.Panel):
         wx.Panel.__init__(self, parent=parent)
         self.fileSize = 0
 
-        #Создадим таймер
+        #Create a timer
         global _timer
         _timer = wx.Timer(self, 1)
 
@@ -382,7 +381,7 @@ class TestPanel(wx.Panel):
         self.backBtn = wx.Button(self, -1, "BACK", (15, 80), (130, 35))
         self.backBtn.Bind(wx.EVT_BUTTON, parent.onSwitchAllTestsPanel)
 
-        #Добавим доску для вывода информации
+        #Add panel to display information
         self.logger = wx.TextCtrl(self,5, "",
                 wx.Point(160,10), wx.Size(330,330),
                 wx.TE_MULTILINE | wx.TE_READONLY)
@@ -397,7 +396,7 @@ class TestPanel(wx.Panel):
             self.logger.SetValue(('\n'.join(fileContent[::-1])).replace('\n\n', '\n'))
             self.fileSize = os.path.getsize(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'))
 
-            #Условие, когда нашло несколько тестов и нужно выбрать какой-то один
+            #Condition when found few tests and to choose any one
             if fileContent.count("I found a few tests.\n") and not fileContent.count("Test selected.\n"):
                 choseTestDia = ChoseTestDialog(self, -1, 'Select test',  fileContent[fileContent.index("I found a few tests.\n")+1:])
                 val = choseTestDia.ShowModal()
@@ -453,10 +452,10 @@ class AllTestsPanel(wx.Panel):
         self.allTest = None
         seen = set()
         self.allTestsListBox = wx.ListBox(self, 26, wx.Point(170,10), wx.Size(290,250), [], wx.LB_SINGLE)
-        #Панелька для короткий информации по каждому тесту
+        #Panel for short information for each test
         self.testInfoText = wx.StaticText(self, -1, '', pos=(190,270), size=(200, 130), style=wx.TE_MULTILINE)
 
-        #Обработчик события нажатия на кнопку
+        #The event handler pressing
         self.Bind(wx.EVT_LISTBOX, self.OnSelect, id=26)
 
     #-----------------------------------------------------------------------------------
@@ -470,7 +469,7 @@ class AllTestsPanel(wx.Panel):
         self.index = event.GetSelection()
         global _cur, _con
         userInfo = self.allTestsListBox.GetString(self.index)
-        #разблокируем кнопки
+        #unlock button
         if userInfo:
             self.solveBtn.Enable()
             self.saveBtn.Enable()
@@ -567,7 +566,7 @@ class UserPanel(wx.Panel):
         self.Bind(wx.EVT_LISTBOX, self.OnSelect, id=26)
         self.userInfoText = wx.StaticText(self, -1, '', pos=(190,270), size=(200, 130), style=wx.TE_MULTILINE)
 
-        #Обработчики событий
+        #event handlers
         self.Bind(wx.EVT_TIMER, self.OnTimer1, id=2)
 
     #-----------------------------------------------------------------------------------
@@ -580,7 +579,7 @@ class UserPanel(wx.Panel):
         _timer1.Start(2000)
         dia = NewUserDialog(self, -1, 'Create new user')
         val = dia.ShowModal()
-        #Запись результатов в базу данных.
+        #Record results into a database.
         if dia.result is not None and len(dia.result)>=3:
             save_records("User", _cur, _con, dia.result)
         dia.Destroy()
@@ -696,11 +695,11 @@ def initialization():
     except OSError:
         print "Directory 'data' already create"
 
-    path = os.path.join(os.getcwd(), 'data', 'upwork_work_version.db')
+    path = os.path.join(os.getcwd(), 'data', 'database.db')
     global _cur, _con
     _cur, _con = connect_or_create(path)
 
-    #Создадим таблицу User, если она еще не создана
+    #Create a table User, if it does not exist yet
     try:
         create_table("User", _cur, _con, USERNAME = "TEXT", EMAIL = "TEXT", PASSWORD = "TEXT")
         create_table("Qestion", _cur, _con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")

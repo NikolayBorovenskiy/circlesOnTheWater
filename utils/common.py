@@ -79,7 +79,7 @@ def get_macaddress(host='localhost'):
     return macaddr
 
 
-#Авторизация программы через мак-адресс. Т.е. запускать на компьтерах с опредленных мак-адрессом.
+#Authorization of the program through a Mac-address.Run computer with certain MAC-address. For Linux Windows
 def authorization(data, iface='eth0'):
     print sys.platform
     print getmac(iface)
@@ -93,10 +93,10 @@ def authorization(data, iface='eth0'):
         sys.exit()
 
 
-#Сохранить результаты в docx файле.
-#Использую для этого пакет python-docx
+#Save in the docx file.
+#Used for this package python-docx
 def saveInFile(data, path):
-    #проверка, что переданные данные - валидные
+    #check that the transmitted data - valid
     if not len(data) or data[0]<5:
         return "Pass data not valid!"
     document = Document()
@@ -121,12 +121,12 @@ def saveInFile(data, path):
     font.bold = True
     
     document.add_picture(os.path.join(os.getcwd(), 'images', 'imgo.jpeg'), width=Inches(1.25))
-    #Название теста
+    #name of the test
     paragraph = document.add_paragraph('{}'.format(data[0][1]), style='Heading 1')
     paragraph_format = paragraph.paragraph_format
     paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    #Отрендерить все данные
+    #Render all the data
     count=0
     for record in data:
         count+=1
@@ -137,7 +137,7 @@ def saveInFile(data, path):
         counterAnswer = 0
         for answer in record[3].split('#~'):
             counterAnswer+=1
-            #Выделяем правильный ответ жирны
+            #Select the correct answer in bold
             if answer.strip() in [item.strip() for item in record[4].split('#~')]:
                 p = document.add_paragraph("")
                 p.add_run("\n{}. {}".format(counterAnswer, answer)).bold = True
@@ -147,12 +147,12 @@ def saveInFile(data, path):
     document.save('{}.docx'.format(path))
     return "File success write."
 
-#Запустить скрипт
+#run the script
 def execute(command, *args, **kwargs):
     os.system(command.format(*args, **kwargs))
 
 
-#Перенос строки
+#Line break
 def hyphenation(text, length=100):
     newText=''
     while True:
@@ -170,7 +170,7 @@ def hyphenation(text, length=100):
     return newText
 
 
-#Распасить модель Qestion
+#Parse model Qestion
 def parserModel(obj):
     results = []
     for i in '{}'.format(obj).split('&;'):
@@ -186,9 +186,6 @@ def readDocx(path):
     paragraphs = document.paragraphs()
     text = [i.text.encode('utf-8') for i in paragraphs]
     print text
-
-
-
 
 try:
     from xml.etree.cElementTree import XML
@@ -228,11 +225,8 @@ def get_docx_text(path):
 
 
 def parse_docx(data, currentPath):
-
-    #Подключимся к базе данных
-    path = os.path.join(currentPath, 'AppUpwork', 'data', 'upwork_work_version.db')
-    print path
-    #print
+    #Connect to database
+    path = os.path.join(currentPath, 'data', 'database.db')
     cur, con = connect_or_create(path)
     qestionText = ''
     testName = data[0]
