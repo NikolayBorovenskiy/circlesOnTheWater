@@ -4,6 +4,7 @@ import wx
 import wx.lib.scrolledpanel as scrolled
 import os
 import sys
+import logging
 
 from threading import Thread
 from time import *
@@ -11,7 +12,7 @@ from time import *
 from utils.common import *
 from utils.SQlite3 import *
 from utils.models import *
-from utils.constants import MAC_ADDRESS, REG_EMAIL, REG_LOGIN, REG_PASSORD, REG_TEST_NAME
+from utils.constants import MAC_ADDRESS, REG_EMAIL, REG_LOGIN, REG_PASSORD, REG_TEST_NAME, BASE_DIR
 
 
 #===================================================================================================
@@ -23,6 +24,7 @@ class Event(object):
 #===================================================================================================
 class ChoseTestDialog(wx.Dialog):
     def __init__(self, parent, id=-1, title=None, tests=None):
+        logger.info('Stage 13')
         wx.Dialog.__init__(self, parent, id, title, size=(330, 340))
 
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -50,7 +52,7 @@ class ChoseTestDialog(wx.Dialog):
         try:
             self.result = self.allFindedTests.GetString(self.index).split('.')[0]
         except AttributeError:
-            print "Attribute error"
+            logger.debug("Attribute error")
         if self.result:
             self.Destroy()
 
@@ -62,6 +64,7 @@ class ChoseTestDialog(wx.Dialog):
 #===================================================================================================
 class NewUserDialog(wx.Dialog):
     def __init__(self, parent, id=-1, title="Enter Name!"):
+        logger.info('Stage 12')
         wx.Dialog.__init__(self, parent, id, title, size=(330, 340))
 
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -124,6 +127,7 @@ class NewUserDialog(wx.Dialog):
 #===================================================================================================
 class StartTestDialog(wx.Dialog):
     def __init__(self, parent, id=-1, title="Start test!"):
+        logger.info('Stage 11')
         wx.Dialog.__init__(self, parent, id, title, size=(330, 270))
         global _cur, _con
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -174,13 +178,13 @@ class StartTestDialog(wx.Dialog):
             userName, email, password = None
             try:
                 _, userName, email, password = filter_table("User", _cur, "USERNAME", None, [user])[0]
-                file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'w')
+                file = open(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'), 'w')
                 file.write('Hello!')
                 file.close()
             except IndexError:
-                print "IndexError"
+                logger.debug("IndexError")
             if (userName or email) and password:
-                pathToScript = 'python {}'.format(os.path.join(os.getcwd(), 'core.py'))
+                pathToScript = 'python {}'.format(os.path.join(BASE_DIR, 'core.py'))
                 t1 = Thread(target=execute, args=(pathToScript + " --test_name {} --user_name {} --email {} --password {}",
                                                     test.replace(' ', '_'),
                                                     userName.replace(' ', '_'),
@@ -198,6 +202,7 @@ class StartTestDialog(wx.Dialog):
 #===================================================================================================
 class SolvingDialog(wx.Dialog):
     def __init__(self, parent, id=-1, title="Solving...", testName=None):
+        logger.info('Stage 10')
         wx.Dialog.__init__(self, parent, id, title, size=(700, 540),
                             style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
@@ -213,6 +218,7 @@ class SolvingDialog(wx.Dialog):
 #============================================================================================
 class UpperPanelSolving(wx.Panel):
     def __init__(self,  *args, **kwargs):
+        logger.info('Stage 9')
         wx.Panel.__init__(self, *args, **kwargs)
         self.testName = args[0].testName
         global _cur, _con
@@ -245,7 +251,7 @@ class UpperPanelSolving(wx.Panel):
 
         self.cb_list = []
         self.subs = []
-        tableIndexs = [i[0] for i in filter_table("Qestion", _cur, "TEST", None, [self.testName])]
+        #tableIndexs = [i[0] for i in filter_table("Qestion", _cur, "TEST", None, [self.testName])]
 
         try:
             self.questionObj = Qestion(*(list(filter_table("Qestion", _cur, "TEST", None, [self.testName])[self.counter-1]))[1:])
@@ -278,7 +284,7 @@ class UpperPanelSolving(wx.Panel):
                 if correct!='No answer' and correct:
                     numberAnswer.append([i.strip() for i in self.questionObj.answers.split('#~')].index(correct.strip()))
             except IndexError as ex:
-                print "Error. Detail: {}".format(ex)
+                logger.debug("Error. Detail: {}".format(ex))
 
         for i in range(len(answersList)):
             cb = wx.CheckBox(self, -1, '')
@@ -317,6 +323,7 @@ class UpperPanelSolving(wx.Panel):
 #===================================================================================================
 class ButtonPanelSolving(wx.Panel):
     def __init__(self, *args, **kwargs):
+        logger.info('Stage 8')
         wx.Panel.__init__(self, *args, **kwargs)
 
         self.saveBtn = wx.Button(self, label="SAVE",  size = (130, 35))
@@ -340,6 +347,7 @@ class StartPanel(wx.Panel):
     """"""
     #----------------------------------------------------------------------
     def __init__(self, parent):
+        logger.info('Stage 7')
         """Constructor"""
         wx.Panel.__init__(self, parent=parent)
 
@@ -347,13 +355,12 @@ class StartPanel(wx.Panel):
         allTestsBtn = wx.Button(self, -1, "TESTS", (20, 100), (175, 50))
 
         #add picture
-        self.bitmap = wx.Bitmap(os.path.join(os.getcwd(), 'images', 'upwork.png'))
-        wx.EVT_PAINT(self, self.OnPaint)
+        #self.bitmap = wx.Bitmap(os.path.join(os.getcwd(), 'images', 'upwork.png'))
+        #wx.EVT_PAINT(self, self.OnPaint)
 
         #The event handler pressing
-        profilesBtn.Bind(wx.EVT_BUTTON, parent.onSwitchUserPanel)
-        #passTestBtn.Bind(wx.EVT_BUTTON, parent.onSwitchTestPanel)
-        allTestsBtn.Bind(wx.EVT_BUTTON, parent.onSwitchAllTestsPanel)
+        #profilesBtn.Bind(wx.EVT_BUTTON, parent.onSwitchUserPanel)
+        #allTestsBtn.Bind(wx.EVT_BUTTON, parent.onSwitchAllTestsPanel)
 
     #Draw a picture
     #----------------------------------------------------------------------
@@ -367,6 +374,7 @@ class TestPanel(wx.Panel):
     """"""
     #----------------------------------------------------------------------
     def __init__(self, parent):
+        logger.info('Stage 6')
         """Constructor"""
         wx.Panel.__init__(self, parent=parent)
         self.fileSize = 0
@@ -390,17 +398,17 @@ class TestPanel(wx.Panel):
 
     #----------------------------------------------------------------------
     def OnTimer(self, event):
-        if os.path.getsize(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'))!=self.fileSize:
-            file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'r')
+        if os.path.getsize(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'))!=self.fileSize:
+            file = open(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'), 'r')
             fileContent = file.readlines()
             self.logger.SetValue(('\n'.join(fileContent[::-1])).replace('\n\n', '\n'))
-            self.fileSize = os.path.getsize(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'))
+            self.fileSize = os.path.getsize(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'))
 
             #Condition when found few tests and to choose any one
             if fileContent.count("I found a few tests.\n") and not fileContent.count("Test selected.\n"):
                 choseTestDia = ChoseTestDialog(self, -1, 'Select test',  fileContent[fileContent.index("I found a few tests.\n")+1:])
                 val = choseTestDia.ShowModal()
-                print choseTestDia.result
+                logger.debug(choseTestDia.result)
                 writeTempFile("Test selected.\n{}".format(choseTestDia.result))
                 choseTestDia.Destroy()
 
@@ -416,6 +424,7 @@ class AllTestsPanel(wx.Panel):
     """"""
     #----------------------------------------------------------------------
     def __init__(self, parent):
+        logger.info('Stage 5')
         """Constructor"""
         wx.Panel.__init__(self, parent=parent)
         self.currentDirectory = os.getcwd()
@@ -527,7 +536,7 @@ class AllTestsPanel(wx.Panel):
             )
         if dlg.ShowModal() == wx.ID_OK:
             paths = dlg.GetPaths()
-            print "You chose the following file(s):"
+            logger.debug("You chose the following file(s):")
             for path in paths:
                 parse_docx(get_docx_text(path), currentPath)
         dlg.Destroy()
@@ -545,6 +554,7 @@ class UserPanel(wx.Panel):
     """"""
     #----------------------------------------------------------------------
     def __init__(self, parent):
+        logger.info('Stage 4')
         """Constructor"""
         wx.Panel.__init__(self, parent=parent)
         self.index = None
@@ -596,7 +606,7 @@ class UserPanel(wx.Panel):
             _, userName, email, password = filter_table("User", _cur, "USERNAME", None, [userInfo])[0]
             self.userInfoText.SetLabel("Name: {}\nEmail: {}\nPassword: {}".format(userName, email, password))
         except IndexError as ex:
-            print "Error: {}".format(ex)
+            logger.debug("Error: {}".format(ex))
 
     #-----------------------------------------------------------------------------------
     def DeleteUser(self, event):
@@ -614,6 +624,7 @@ class MainFrame(wx.Frame):
         no_resize = wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER |
                                                 wx.RESIZE_BOX |
                                                 wx.MAXIMIZE_BOX)
+        logger.info('Stage 3')
 
         wx.Frame.__init__(self, parent, -1, title, pos=(400, 150), size=(500, 350), style=no_resize)
         initialization()
@@ -621,19 +632,19 @@ class MainFrame(wx.Frame):
         self.colur = wx.Colour(0, 0, 0)
 
         self.panelStart = StartPanel(self)
-        self.panelUsers = UserPanel(self)
-        self.panelTest = TestPanel(self)
-        self.panelAllTests = AllTestsPanel(self)
+        #self.panelUsers = UserPanel(self)
+        #self.panelTest = TestPanel(self)
+        #self.panelAllTests = AllTestsPanel(self)
 
-        self.panelUsers.Hide()
-        self.panelTest.Hide()
-        self.panelAllTests.Hide()
+        #self.panelUsers.Hide()
+        #self.panelTest.Hide()
+        #self.panelAllTests.Hide()
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.panelStart, 1, wx.EXPAND)
-        self.sizer.Add(self.panelUsers, 1, wx.EXPAND)
-        self.sizer.Add(self.panelTest, 1, wx.EXPAND)
-        self.sizer.Add(self.panelAllTests, 1, wx.EXPAND)
+        #self.sizer.Add(self.panelUsers, 1, wx.EXPAND)
+        #self.sizer.Add(self.panelTest, 1, wx.EXPAND)
+        #self.sizer.Add(self.panelAllTests, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
 
     #-----------------------------------------------------------------------------------
@@ -680,6 +691,7 @@ class MainFrame(wx.Frame):
 #===================================================================================================
 class App(wx.App):
     def OnInit(self):
+        logger.info('Stage 2')
         frame = MainFrame(None, "Circles on the water")
         frame.Show(True)
         self.SetTopWindow(frame)
@@ -691,11 +703,11 @@ def initialization():
     #authorization(MAC_ADDRESS)
 
     try:
-        os.mkdir(os.path.join(os.getcwd(), 'data'))
+        os.mkdir(os.path.join(BASE_DIR, 'data'))
     except OSError:
-        print "Directory 'data' already create"
+        logger.debug("Directory 'data' already create")
 
-    path = os.path.join(os.getcwd(), 'data', 'database.db')
+    path = os.path.join(BASE_DIR, 'data', 'database.db')
     global _cur, _con
     _cur, _con = connect_or_create(path)
 
@@ -704,12 +716,28 @@ def initialization():
         create_table("User", _cur, _con, USERNAME = "TEXT", EMAIL = "TEXT", PASSWORD = "TEXT")
         create_table("Qestion", _cur, _con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")
     except:
-        print "Tables already create."
+        logger.debug("Tables already create.")
 
 
 # Run the program
 if __name__ == "__main__":
-    _timer, _timer1, _timer2, _cur, _con = None, None, None, None, None
 
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    #initialization
+    #initialization()
+    # create a file handler
+    handler = logging.FileHandler('main.log')
+    handler.setLevel(logging.INFO)
+
+    # create a logging format
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
+    # add the handlers to the logger
+    logger.addHandler(handler)
+
+    _timer, _timer1, _timer2, _cur, _con = None, None, None, None, None
+    logger.info('Stage 1')
     app = App()
     app.MainLoop()

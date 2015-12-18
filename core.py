@@ -5,6 +5,7 @@ import os
 import random
 import sys
 import argparse
+import logging
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -14,11 +15,22 @@ from utils.models import *
 from utils.SQlite3 import *
 from utils.common import *
 
-from utils.constants import LINK_CSS_TEST
+from utils.constants import LINK_CSS_TEST, BASE_DIR
 
 
 # Run the program
-if __name__ == "__main__":   
+if __name__ == "__main__":
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    # create a file handler
+    handler = logging.FileHandler(os.path.join(BASE_DIR, 'data', 'core.log'))
+    handler.setLevel(logging.INFO)
+    # create a logging format
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(handler)
+
     # construct the argument parser and parse the arguments
     ap = argparse.ArgumentParser(
         description='''
@@ -59,14 +71,13 @@ if __name__ == "__main__":
         )
 
     args = vars(ap.parse_args())
-
+    logger.info('Stage 1')
     #Making bot !!!
     bot = Bot("Anny")
     bot.start("https://www.upwork.com/")
     #bot.start("http://whatismyipaddress.com/")
 
     #Check where bot
-    
     writeTempFile(bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing"))
     locationControl(bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing"))
     #Go to login page
@@ -106,15 +117,15 @@ if __name__ == "__main__":
     if len(testList)>1:
         writeTempFile(bot.doSpeak('I found a few tests.'))
         for i in range(len(testList)):
-            print "{}. {}".format(i+1, testList[i])
+            logger.debug("{}. {}".format(i+1, testList[i]))
             writeTempFile(bot.doSpeak("{}. {}".format(i+1, testList[i])))
         while True:
             #Ждем пока пользователь не выберет нужный тест
-            file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'r')
+            file = open(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'), 'r')
             fileContent = file.readlines()
             if fileContent.count("Test selected.\n"):
                 testNumber = int(fileContent[-1])
-                print testNumber, 'testNumber'
+                logger.debug(testNumber)
                 break
 
     #Select the required test, or first, if there was one, or a user will point
@@ -136,12 +147,12 @@ if __name__ == "__main__":
     #Connecting the database
     #In turn called every page and if the question is a new one, write it in the database.
     #Database Connection
-    cur, con = connect_or_create(os.path.join(os.getcwd(), 'data', 'database.db'))
+    cur, con = connect_or_create(os.path.join(BASE_DIR, 'data', 'database.db'))
     #Create the table Question, if it does not exist yet
     try:
         create_table("Qestion", cur, con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")
     except:
-        print "Table already create."
+        logger.debug("Table already create.")
 
     #IN THIS SECTION BOT to answer questions
     #for linkToTestPage in linkCSSTest:
@@ -181,8 +192,6 @@ if __name__ == "__main__":
         paramsToNewObj = []
         qestionIS = filter_table("Qestion", cur, "TEST", "QESTION", [testList[testNumber-1], text_list[0]])
         if qestionIS:
-            print qestionIS
-            print "hello hello hello"
             writeTempFile(bot.doSpeak("I know this qestion :)"))
             tempObj = Qestion(*(list(qestionIS[0]))[1:])
             #Database search the correct answer
@@ -203,18 +212,14 @@ if __name__ == "__main__":
             paramsToNewObj.append('#~'.join(text_list[1:]))
             paramsToNewObj.append('No answer')
             paramsToNewObj.append(amountAnswersMoreOne)
-            print paramsToNewObj
+            logger.debug(paramsToNewObj)
             #Save the record in a database
             try:
-                print Qestion(*paramsToNewObj), 'object'
-                print parserModel(Qestion(*paramsToNewObj)), 'parser'
                 save_records("Qestion", cur, con,parserModel(Qestion(*paramsToNewObj)))
                 writeTempFile(bot.doSpeak("Write to data base."))
             except Exception as ex:
-
                 writeTempFile(bot.doSpeak("Write error."))
-                print "Record error"
-                print "Record to data base error. Detail: {}".format(ex)
+                logger.debug("Record to data base error. Detail: {}".format(ex))
             numberAnswer = [random.randint(0, len(text_list[1:])-1)] #Случайный ответ, если не знаем, что отвечать
 
         #STAGE answers to questions

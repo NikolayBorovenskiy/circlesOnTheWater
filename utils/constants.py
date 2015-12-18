@@ -1,3 +1,5 @@
+import os
+
 
 LIST_SAVE_PAGES_PYTHON_TEST = [
     'file:///Volumes/GSP1RMCULFRER_RU_DVD/Fortifier_proj/python_test/Upwork%20-%20Adaptive%20Skill%20Test_files/Upwork%20-%20Adaptive%20Skill%20Test.html',
@@ -171,3 +173,5 @@ REG_EMAIL = '^[a-zA-Z0-9.-_]{1,100}[@][a-z]{2,6}\.[a-z]{2,4}'
 REG_LOGIN = '[a-zA-Z0-9._-]{2,}'
 REG_PASSORD = '[A-Za-z0-9@#$%^&+=]{8,}'
 REG_TEST_NAME = '[A-Za-z0-9+.# ]{2,}'
+
+BASE_DIR = os.path.join(os.getcwd(), 'Robot')
