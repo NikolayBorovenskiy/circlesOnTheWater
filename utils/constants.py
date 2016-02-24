@@ -169,9 +169,10 @@ PROXY_LIST = {
     "USA": ["52.32.80.190", 80],
 }
 
-REG_EMAIL = '^[a-zA-Z0-9.-_]{1,100}[@][a-z]{2,6}\.[a-z]{2,4}'
+REG_EMAIL = '^[a-zA-Z0-9.-_]{1,100}@[a-z0-9]{2,8}\.[a-z]{2,4}'
 REG_LOGIN = '[a-zA-Z0-9._-]{2,}'
-REG_PASSORD = '[A-Za-z0-9@#$%^&+=]{8,}'
+REG_PASSWORD = '[A-Za-z0-9@#$%^&+=]{8,}'
 REG_TEST_NAME = '[A-Za-z0-9+.# ]{2,}'
 
-BASE_DIR = os.path.join(os.getcwd(), 'Robot')
+#BASE_DIR = os.path.join(os.getcwd(), 'Robot')
+BASE_DIR = os.path.join(os.getcwd())

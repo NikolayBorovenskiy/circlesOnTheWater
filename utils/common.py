@@ -17,7 +17,7 @@ from utils.models import Qestion
 
 def locationControl(text):
     if text == "I am lost. ;(":
-        sys.exit()
+        print "Stranger header on the page"
 
 #Rear computer mac-adress Linux
 def getmac(iface):
@@ -138,6 +138,11 @@ def saveInFile(data, path):
         for answer in record[3].split('#~'):
             counterAnswer+=1
             #Select the correct answer in bold
+            #print '----------------------'
+            #print answer.strip()
+            #print [item.strip() for item in record[4].split('#~')]
+            #print '----------------------'
+
             if answer.strip() in [item.strip() for item in record[4].split('#~')]:
                 p = document.add_paragraph("")
                 p.add_run("\n{}. {}".format(counterAnswer, answer)).bold = True

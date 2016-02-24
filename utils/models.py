@@ -116,6 +116,18 @@ class Bot(object):
             writeTempFile("I cann't go on. Sorry.")
             sys.exit()
 
+    def clickOnButtonByLink(self, link):
+        try:
+            self.htmlElement = WebDriverWait(self.driver, self.parseTime).until(lambda driver: driver.find_element_by_link_text(link))
+            self.htmlElement.click()
+        except TimeoutException as ex:
+            print 'Error: Operation - clickOnButton. Detail: {}'.format(ex)
+            return False
+        except Exception as ex:
+            print 'Error. Detail: {}'.format(ex)
+            return False
+        return True
+
     def writeField(self, xpath, text):
         try:
             self.htmlElement = WebDriverWait(self.driver, self.parseTime).until(lambda driver: driver.find_element_by_xpath(xpath))

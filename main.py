@@ -12,7 +12,7 @@ from time import *
 from utils.common import *
 from utils.SQlite3 import *
 from utils.models import *
-from utils.constants import MAC_ADDRESS, REG_EMAIL, REG_LOGIN, REG_PASSORD, REG_TEST_NAME, BASE_DIR
+from utils.constants import MAC_ADDRESS, REG_EMAIL, REG_LOGIN, REG_PASSWORD, REG_TEST_NAME, BASE_DIR
 
 
 #===================================================================================================
@@ -111,7 +111,10 @@ class NewUserDialog(wx.Dialog):
         email = self.fieldEmail.GetValue()
         password = self.fieldPassword.GetValue()
         #Validation of entered data
-        if validation(login, REG_LOGIN) and validation(email, REG_EMAIL) and validation(password, REG_PASSORD):
+        print validation(login, REG_LOGIN)
+        print validation(email, REG_EMAIL)
+        print validation(password, REG_PASSWORD)
+        if validation(login, REG_LOGIN) and validation(email, REG_EMAIL) and validation(password, REG_PASSWORD):
             self.result = []
             self.result.append(login)
             self.result.append(email)
@@ -140,6 +143,8 @@ class StartTestDialog(wx.Dialog):
         #Input field user
         self.labelUser = wx.StaticText(self, label="Chose user")
         self.listUser = wx.ComboBox(self, -1, pos=(50, 170), size=(300, -1), choices=[i[0] for i in show_table("User", _cur, "USERNAME")], style=wx.CB_READONLY)
+        self.setSpeed = wx.CheckBox(self, label='Fast', pos=(20, 20))
+        self.setSpeed.SetValue(False)
         self.okButton = wx.Button(self, label="GO", id=wx.ID_YES)
         self.cancelButton = wx.Button(self, label="CANCEL", id=wx.ID_CANCEL)
 
@@ -147,6 +152,7 @@ class StartTestDialog(wx.Dialog):
         self.mainSizer.Add(self.fieldTestName, 0, wx.ALL, 8 )
         self.mainSizer.Add(self.labelUser, 0, wx.ALL, 8 )
         self.mainSizer.Add(self.listUser, 0, wx.ALL, 8 )
+        self.mainSizer.Add(self.setSpeed, 0, wx.ALL, 8 )
 
         self.buttonSizer.Add(self.okButton, 0, wx.ALL, 20 )
         self.buttonSizer.Add(self.cancelButton, 0, wx.ALL, 20 )
@@ -171,11 +177,12 @@ class StartTestDialog(wx.Dialog):
         except:
             pass
         test = self.fieldTestName.GetValue()
+        speed = self.setSpeed.GetValue()
 
         #Creating a new program stream
         #Run the script in a different thread
         if validation(test, REG_TEST_NAME) and user:
-            userName, email, password = None
+            userName, email, password = None, None, None
             try:
                 _, userName, email, password = filter_table("User", _cur, "USERNAME", None, [user])[0]
                 file = open(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'), 'w')
@@ -185,11 +192,12 @@ class StartTestDialog(wx.Dialog):
                 logger.debug("IndexError")
             if (userName or email) and password:
                 pathToScript = 'python {}'.format(os.path.join(BASE_DIR, 'core.py'))
-                t1 = Thread(target=execute, args=(pathToScript + " --test_name {} --user_name {} --email {} --password {}",
+                t1 = Thread(target=execute, args=(pathToScript + " --test_name {} --user_name {} --email {} --password {} --speed {}",
                                                     test.replace(' ', '_'),
                                                     userName.replace(' ', '_'),
                                                     email,
-                                                    password.replace(';', '\;')))
+                                                    password.replace(';', '\;'),
+                                                    speed))
                 t1.start()
                 self.Close()
 
@@ -355,12 +363,12 @@ class StartPanel(wx.Panel):
         allTestsBtn = wx.Button(self, -1, "TESTS", (20, 100), (175, 50))
 
         #add picture
-        #self.bitmap = wx.Bitmap(os.path.join(os.getcwd(), 'images', 'upwork.png'))
-        #wx.EVT_PAINT(self, self.OnPaint)
+        self.bitmap = wx.Bitmap(os.path.join(os.getcwd(), 'images', 'upwork.png'))
+        wx.EVT_PAINT(self, self.OnPaint)
 
         #The event handler pressing
-        #profilesBtn.Bind(wx.EVT_BUTTON, parent.onSwitchUserPanel)
-        #allTestsBtn.Bind(wx.EVT_BUTTON, parent.onSwitchAllTestsPanel)
+        profilesBtn.Bind(wx.EVT_BUTTON, parent.onSwitchUserPanel)
+        allTestsBtn.Bind(wx.EVT_BUTTON, parent.onSwitchAllTestsPanel)
 
     #Draw a picture
     #----------------------------------------------------------------------
@@ -438,7 +446,7 @@ class AllTestsPanel(wx.Panel):
         self.homeBtn = wx.Button(self, -1, "HOME", (15, 40), (130, 35))
         self.homeBtn.Bind(wx.EVT_BUTTON, parent.onSwitchMainPanels)
 
-        self.passBtn = wx.Button(self, -1, "PASS", (15, 80), (130, 35))
+        self.passBtn = wx.Button(self, -1, "EXAM", (15, 80), (130, 35))
         self.passBtn.Bind(wx.EVT_BUTTON, parent.onSwitchTestPanel)
 
         self.solveBtn = wx.Button(self, -1, "SOLVE", (15, 120), (130, 35))
@@ -632,19 +640,19 @@ class MainFrame(wx.Frame):
         self.colur = wx.Colour(0, 0, 0)
 
         self.panelStart = StartPanel(self)
-        #self.panelUsers = UserPanel(self)
-        #self.panelTest = TestPanel(self)
-        #self.panelAllTests = AllTestsPanel(self)
+        self.panelUsers = UserPanel(self)
+        self.panelTest = TestPanel(self)
+        self.panelAllTests = AllTestsPanel(self)
 
-        #self.panelUsers.Hide()
-        #self.panelTest.Hide()
-        #self.panelAllTests.Hide()
+        self.panelUsers.Hide()
+        self.panelTest.Hide()
+        self.panelAllTests.Hide()
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.panelStart, 1, wx.EXPAND)
-        #self.sizer.Add(self.panelUsers, 1, wx.EXPAND)
-        #self.sizer.Add(self.panelTest, 1, wx.EXPAND)
-        #self.sizer.Add(self.panelAllTests, 1, wx.EXPAND)
+        self.sizer.Add(self.panelUsers, 1, wx.EXPAND)
+        self.sizer.Add(self.panelTest, 1, wx.EXPAND)
+        self.sizer.Add(self.panelAllTests, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
 
     #-----------------------------------------------------------------------------------
@@ -717,6 +725,7 @@ def initialization():
         create_table("Qestion", _cur, _con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")
     except:
         logger.debug("Tables already create.")
+
 
 
 # Run the program

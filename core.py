@@ -43,6 +43,7 @@ if __name__ == "__main__":
                         --user_name your_user_name
                         --email your_email
                         --password your_password
+                        --speed
             '''
         )
 
@@ -69,6 +70,10 @@ if __name__ == "__main__":
         "-p", "--password", type=str, required=True, 
         help="User password"
         )
+    ap.add_argument(
+        "-s", "--speed", type=str, required=True, 
+        help="Speed of answers to the questions"
+        )
 
     args = vars(ap.parse_args())
     logger.info('Stage 1')
@@ -76,7 +81,6 @@ if __name__ == "__main__":
     bot = Bot("Anny")
     bot.start("https://www.upwork.com/")
     #bot.start("http://whatismyipaddress.com/")
-
     #Check where bot
     writeTempFile(bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing"))
     locationControl(bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing"))
@@ -86,7 +90,7 @@ if __name__ == "__main__":
     writeTempFile(bot.checkLocation("Log In - Upwork", "login"))
     locationControl(bot.checkLocation("Log In - Upwork", "login"))
     #Fill the box with login and password
-    bot.writeField(".//*[@id='login_username']", args["email"])
+    bot.writeField(".//*[@id='login_username']", args["user_name"])
     bot.writeField(".//*[@id='login_password']", args["password"])
    
     #login
@@ -95,10 +99,14 @@ if __name__ == "__main__":
     writeTempFile(bot.checkLocation("Find Jobs - Upwork", "my"))
     locationControl(bot.checkLocation("Find Jobs - Upwork", "my"))
     #Go to the page with the tests
-    bot.clickOnButton("html/body/header/div/div[3]/nav/ul/li[6]/a")
+    #bot.clickOnButton("html/body/header/div/div[3]/nav/ul/li[6]/a")
+    bot.clickOnButtonByLink("Tests")
+
+    bot.clickOnButtonByLink("View more tests")
     #Check where bot
     writeTempFile(bot.checkLocation("Qualification Tests for Freelancers & Programmers - Certifications for Outsourcing - Upwork", "tests"))
     locationControl(bot.checkLocation("Qualification Tests for Freelancers & Programmers - Certifications for Outsourcing - Upwork", "tests"))
+    print "Hello3"
     #Finding text.
     bot.writeField(".//*[@id='filter_name']", args["test_name"].replace('_', ' '))
     bot.clickOnButton(".//*[@id='submitButton']")
@@ -107,7 +115,7 @@ if __name__ == "__main__":
     #Parse a table with the results of the tests found
     #If the result is is more than one then you need to ask the user which test should pass
 
-    testList = bot.parseTable('//*[@id="skilltestslist"]', 'test_name', "tr")
+    testList = bot.parseTable('//*[@id="skilltestslist"]', 'test_name', 'tr')
     testNumber = 1
     if not testList:
         writeTempFile(bot.doSpeak("I can't find your test. Sorry."))
@@ -130,12 +138,12 @@ if __name__ == "__main__":
 
     #Select the required test, or first, if there was one, or a user will point
     #Go to the page with the test
-    bot.clickOnButton(".//*[@id='skilltestslist']/tbody/tr[{}]/td[1]/a".format(testNumber))
+    #bot.clickOnButton(".//*[@id='skilltestslist']/tbody/tr[{}]/td[1]/a".format(testNumber))
     #Check where bot
     writeTempFile(bot.checkLocation("{} - Upwork".format(testList[testNumber-1]), "{}".format(testList[testNumber-1])))
     locationControl(bot.checkLocation("{} - Upwork".format(testList[testNumber-1]), "{}".format(testList[testNumber-1])))
 
-    #bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/4/Python%20Test%20-%20Upwork.html')
+    bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/4/Python%20Test%20-%20Upwork.html')
     #bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/Django%20Test/1/Django%20Test%20-%20Upwork.html')
     #bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/css_test/1/CSS%20Test%20-%20Upwork.html')
     #Go to the page with the tests
@@ -230,6 +238,8 @@ if __name__ == "__main__":
             #time.sleep(3)
 
         #acknowledgment response
+        if args["speed"] =="False":
+            time.sleep(10)
         bot.clickOnButton('//*[@id="continue"]')
 
     #It is done, close the browser

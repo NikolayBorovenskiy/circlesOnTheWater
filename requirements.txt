@@ -4,5 +4,3 @@ python-docx==0.8.5
 selenium==2.48.0
 wheel==0.24.0
 pythonwx
-
-rttyuj5674df
