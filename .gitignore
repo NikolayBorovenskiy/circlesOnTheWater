@@ -7,3 +7,5 @@ utils/constants.py
 *.txt~
 upwork_work_version.db
 logs/
+execute/build
+execute/dist

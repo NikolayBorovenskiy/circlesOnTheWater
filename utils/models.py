@@ -10,7 +10,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 
 from utils.constants import PROXY_LIST
-from SQlite3 import *
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class Qestion(object):
     def __init__(self, name, qestion, answers, correct=None, moreOne=False):
@@ -183,7 +192,7 @@ class Bot(object):
 
 def writeTempFile(text):
 
-    file = open(os.path.join(os.getcwd(), 'data', 'botPhrase.txt'), 'a+')
+    file = open(resource_path(os.path.join('data', 'botPhrase.txt')), 'a+')
     file.write("\n{}".format(text))
     file.close()
 

@@ -6,11 +6,6 @@ import commands
 import random
 import re
 
-from docx import Document
-from docx.shared import Inches, RGBColor, Pt
-from docx.text.run import Font, Run
-from docx.enum.style import WD_STYLE_TYPE
-from docx.enum.text import WD_ALIGN_PARAGRAPH
 from utils.SQlite3 import *
 from utils.models import Qestion
 
@@ -92,10 +87,11 @@ def authorization(data, iface='eth0'):
         print "Unfamiliar MAC address!"
         sys.exit()
 
-
+'''
 #Save in the docx file.
 #Used for this package python-docx
 def saveInFile(data, path):
+    print path
     #check that the transmitted data - valid
     if not len(data) or data[0]<5:
         return "Pass data not valid!"
@@ -106,7 +102,7 @@ def saveInFile(data, path):
     font.size = Pt(10)
     font.name = 'Arial'
 
-
+    print "hello"
     styles = document.styles
     style = styles.add_style('Question', WD_STYLE_TYPE.PARAGRAPH)
     style = document.styles['Question']
@@ -150,7 +146,9 @@ def saveInFile(data, path):
                 p = document.add_paragraph("\n{}. {}".format(counterAnswer, answer))
 
     document.save('{}.docx'.format(path))
+    print "hello2"
     return "File success write."
+'''
 
 #run the script
 def execute(command, *args, **kwargs):
@@ -185,7 +183,7 @@ def parserModel(obj):
         results.append(i)
     return results
 
-
+'''
 def readDocx(path):
     document = Document(path)
     paragraphs = document.paragraphs()
@@ -199,10 +197,10 @@ except ImportError:
 import zipfile
 
 
-"""
+
 Module that extract text from MS XML Word document (.docx).
 (Inspired by python-docx <https://github.com/mikemaccana/python-docx>)
-"""
+
 
 WORD_NAMESPACE = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 PARA = WORD_NAMESPACE + 'p'
@@ -261,6 +259,7 @@ def parse_docx(data, currentPath):
                 print update_record("Qestion", cur, con, "CORRECT", '#~'.join(questionObj.correctAnswer), i)
             except:
                 print "Save record error."
+'''
 
 
 def validation(target, regx):
@@ -271,6 +270,16 @@ def validation(target, regx):
     else:
         return None
 
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 # Run the program
 #if __name__ == "__main__":
     #for i in get_docx_text("../node.docx"):

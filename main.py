@@ -6,13 +6,158 @@ import os
 import sys
 import logging
 
+from docx import Document
+from docx.shared import Inches, RGBColor, Pt
+from docx.text.run import Font, Run
+from docx.enum.style import WD_STYLE_TYPE
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
 from threading import Thread
 from time import *
 
+from core import start_upwork
 from utils.common import *
 from utils.SQlite3 import *
 from utils.models import *
 from utils.constants import MAC_ADDRESS, REG_EMAIL, REG_LOGIN, REG_PASSWORD, REG_TEST_NAME, BASE_DIR
+
+
+#==========================DOCX=====================================
+#Save in the docx file.
+#Used for this package python-docx
+def saveInFile(data, path):
+    #check that the transmitted data - valid
+    if not len(data) or data[0]<5:
+        return "Pass data not valid!"
+    document = Document()
+    style = document.styles['IntenseQuote']
+    font = style.font
+    font.color.rgb = RGBColor(255, 0, 0)
+    font.size = Pt(10)
+    font.name = 'Arial'
+
+    styles = document.styles
+    style = styles.add_style('Question', WD_STYLE_TYPE.PARAGRAPH)
+    style = document.styles['Question']
+    fontQuestion = style.font
+    fontQuestion.color.rgb = RGBColor(51, 153, 0)
+    fontQuestion.size = Pt(13)
+
+    style = document.styles['Heading 1']
+    font = style.font
+    font.color.rgb = RGBColor(102, 51, 102)
+    font.size = Pt(18)
+    font.bold = True
+
+    document.add_picture(resource_path(os.path.join('images', 'imgo.jpeg')), width=Inches(1.25))
+    #name of the test
+    paragraph = document.add_paragraph('{}'.format(data[0][1]), style='Heading 1')
+    paragraph_format = paragraph.paragraph_format
+    paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    #Render all the data
+    count=0
+    for record in data:
+        count+=1
+        document.add_paragraph('\n#{}. {}'.format(count, record[2]), style = 'Question')
+        if record[5]:
+
+            document.add_paragraph('There may be more than one answer.', style='IntenseQuote')
+        counterAnswer = 0
+        for answer in record[3].split('#~'):
+            counterAnswer+=1
+            #Select the correct answer in bold
+            #print '----------------------'
+            #print answer.strip()
+            #print [item.strip() for item in record[4].split('#~')]
+            #print '----------------------'
+
+            if answer.strip() in [item.strip() for item in record[4].split('#~')]:
+                p = document.add_paragraph("")
+                p.add_run("\n{}. {}".format(counterAnswer, answer)).bold = True
+            else:
+                p = document.add_paragraph("\n{}. {}".format(counterAnswer, answer))
+
+    document.save('{}.docx'.format(path))
+    return "File success write."
+
+
+def readDocx(path):
+    document = Document(path)
+    paragraphs = document.paragraphs()
+    text = [i.text.encode('utf-8') for i in paragraphs]
+
+try:
+    from xml.etree.cElementTree import XML
+except ImportError:
+    from xml.etree.ElementTree import XML
+import zipfile
+
+
+"""
+Module that extract text from MS XML Word document (.docx).
+(Inspired by python-docx <https://github.com/mikemaccana/python-docx>)
+"""
+
+WORD_NAMESPACE = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
+PARA = WORD_NAMESPACE + 'p'
+TEXT = WORD_NAMESPACE + 't'
+
+def get_docx_text(path):
+    pass
+    """
+    Take the path of a docx file as argument, return the text in unicode.
+    """
+    document = zipfile.ZipFile(path)
+    xml_content = document.read('word/document.xml')
+    document.close()
+    tree = XML(xml_content)
+
+    paragraphs = []
+    for paragraph in tree.getiterator(PARA):
+        texts = [node.text
+                 for node in paragraph.getiterator(TEXT)
+                 if node.text]
+        if texts:
+            paragraphs.append(''.join(texts))
+
+    return paragraphs
+
+
+def parse_docx(data):
+    #Connect to database
+    path = resource_path(os.path.join('data', 'database.db'))
+    cur, con = connect_or_create(path)
+    qestionText = ''
+    testName = data[0]
+    qestionPosition = [i for i in range(len(data)) if data[i].startswith('#')]
+    mapDict = {}
+    ID = None
+    for i in range(len(data)):
+        if i in qestionPosition:
+            try:
+                qestionText = re.sub(r'#\d{0,9}. {0,}', '', data[i])
+                ID = filter_table("Qestion", cur, "TEST", "QESTION", [testName, qestionText])[0][0]
+            except:
+                result = filter_table("Qestion", cur, "TEST", None, [testName])
+
+                for j in result:
+                    if qestionText == re.sub(r'\n', '', j[2]):
+                        ID = j[0]
+            mapDict[ID] = ''
+        if data[i].startswith('+'):
+            mapDict[ID] += (re.match(r' {0,}\+ {0,}\d+', data[i]).group()[1])
+
+    for i in mapDict.keys():
+        if mapDict[i]:
+            questionObj = Qestion(*list(filter_table("Qestion", cur, "ID", None, [i])[0])[1:])
+            questionObj.findAnswer(mapDict[i])
+            try:
+                print update_record("Qestion", cur, con, "CORRECT", '#~'.join(questionObj.correctAnswer), i)
+            except:
+                print "Save record error."
+
+#===================================================================
 
 
 #===================================================================================================
@@ -111,9 +256,6 @@ class NewUserDialog(wx.Dialog):
         email = self.fieldEmail.GetValue()
         password = self.fieldPassword.GetValue()
         #Validation of entered data
-        print validation(login, REG_LOGIN)
-        print validation(email, REG_EMAIL)
-        print validation(password, REG_PASSWORD)
         if validation(login, REG_LOGIN) and validation(email, REG_EMAIL) and validation(password, REG_PASSWORD):
             self.result = []
             self.result.append(login)
@@ -185,19 +327,18 @@ class StartTestDialog(wx.Dialog):
             userName, email, password = None, None, None
             try:
                 _, userName, email, password = filter_table("User", _cur, "USERNAME", None, [user])[0]
-                file = open(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'), 'w')
+                file = open(resource_path(os.path.join('data', 'botPhrase.txt')), 'w')
                 file.write('Hello!')
                 file.close()
             except IndexError:
                 logger.debug("IndexError")
             if (userName or email) and password:
-                pathToScript = 'python {}'.format(os.path.join(BASE_DIR, 'core.py'))
-                t1 = Thread(target=execute, args=(pathToScript + " --test_name {} --user_name {} --email {} --password {} --speed {}",
-                                                    test.replace(' ', '_'),
-                                                    userName.replace(' ', '_'),
-                                                    email,
-                                                    password.replace(';', '\;'),
-                                                    speed))
+
+                t1 = Thread(target=start_upwork, args=(test.replace(' ', '_'),
+                                                               userName.replace(' ', '_'),
+                                                               email, password.replace(';', '\;'),
+                                                               speed))
+
                 t1.start()
                 self.Close()
 
@@ -363,7 +504,7 @@ class StartPanel(wx.Panel):
         allTestsBtn = wx.Button(self, -1, "TESTS", (20, 100), (175, 50))
 
         #add picture
-        self.bitmap = wx.Bitmap(os.path.join(os.getcwd(), 'images', 'upwork.png'))
+        self.bitmap = wx.Bitmap(resource_path(os.path.join('images', 'upwork.png')))
         wx.EVT_PAINT(self, self.OnPaint)
 
         #The event handler pressing
@@ -406,11 +547,11 @@ class TestPanel(wx.Panel):
 
     #----------------------------------------------------------------------
     def OnTimer(self, event):
-        if os.path.getsize(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'))!=self.fileSize:
-            file = open(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'), 'r')
+        if os.path.getsize(resource_path(os.path.join('data', 'botPhrase.txt')))!=self.fileSize:
+            file = open(resource_path(os.path.join('data', 'botPhrase.txt')), 'r')
             fileContent = file.readlines()
             self.logger.SetValue(('\n'.join(fileContent[::-1])).replace('\n\n', '\n'))
-            self.fileSize = os.path.getsize(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'))
+            self.fileSize = os.path.getsize(resource_path(os.path.join('data', 'botPhrase.txt')))
 
             #Condition when found few tests and to choose any one
             if fileContent.count("I found a few tests.\n") and not fileContent.count("Test selected.\n"):
@@ -534,7 +675,7 @@ class AllTestsPanel(wx.Panel):
         """
         Create and show the Open FileDialog
         """
-        currentPath = os.getcwd()
+        #currentPath = os.getcwd()
         dlg = wx.FileDialog(
             self, message="Choose a file",
             defaultDir=self.currentDirectory,
@@ -546,7 +687,7 @@ class AllTestsPanel(wx.Panel):
             paths = dlg.GetPaths()
             logger.debug("You chose the following file(s):")
             for path in paths:
-                parse_docx(get_docx_text(path), currentPath)
+                parse_docx(get_docx_text(path))
         dlg.Destroy()
 
     #-----------------------------------------------------------------------------------
@@ -699,7 +840,7 @@ class MainFrame(wx.Frame):
 #===================================================================================================
 class App(wx.App):
     def OnInit(self):
-        logger.info('Stage 2')
+        #logger.info('Stage 2')
         frame = MainFrame(None, "Circles on the water")
         frame.Show(True)
         self.SetTopWindow(frame)
@@ -711,11 +852,11 @@ def initialization():
     #authorization(MAC_ADDRESS)
 
     try:
-        os.mkdir(os.path.join(BASE_DIR, 'data'))
+        os.mkdir(resource_path(os.path.join('data')))
     except OSError:
         logger.debug("Directory 'data' already create")
 
-    path = os.path.join(BASE_DIR, 'data', 'database.db')
+    path = resource_path(os.path.join('data', 'database.db'))
     global _cur, _con
     _cur, _con = connect_or_create(path)
 
@@ -727,7 +868,6 @@ def initialization():
         logger.debug("Tables already create.")
 
 
-
 # Run the program
 if __name__ == "__main__":
 
@@ -736,7 +876,7 @@ if __name__ == "__main__":
     #initialization
     #initialization()
     # create a file handler
-    handler = logging.FileHandler('main.log')
+    handler = logging.FileHandler(resource_path('main.log'))
     handler.setLevel(logging.INFO)
 
     # create a logging format
@@ -745,6 +885,7 @@ if __name__ == "__main__":
 
     # add the handlers to the logger
     logger.addHandler(handler)
+
 
     _timer, _timer1, _timer2, _cur, _con = None, None, None, None, None
     logger.info('Stage 1')

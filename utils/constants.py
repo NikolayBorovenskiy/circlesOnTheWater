@@ -175,4 +175,4 @@ REG_PASSWORD = '[A-Za-z0-9@#$%^&+=]{8,}'
 REG_TEST_NAME = '[A-Za-z0-9+.# ]{2,}'
 
 #BASE_DIR = os.path.join(os.getcwd(), 'Robot')
-BASE_DIR = os.path.join(os.getcwd())
+BASE_DIR = os.path.join(os.path.abspath("."))

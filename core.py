@@ -4,8 +4,8 @@ import time
 import os
 import random
 import sys
-import argparse
 import logging
+import imp
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -19,11 +19,13 @@ from utils.constants import LINK_CSS_TEST, BASE_DIR
 
 
 # Run the program
-if __name__ == "__main__":
+#if __name__ == "__main__":
+def start_upwork(test_name, user_name, email, password, speed):
+
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     # create a file handler
-    handler = logging.FileHandler(os.path.join(BASE_DIR, 'data', 'core.log'))
+    handler = logging.FileHandler(resource_path(os.path.join('data', 'core.log')))
     handler.setLevel(logging.INFO)
     # create a logging format
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -31,57 +33,14 @@ if __name__ == "__main__":
     # add the handlers to the logger
     logger.addHandler(handler)
 
-    # construct the argument parser and parse the arguments
-    ap = argparse.ArgumentParser(
-        description='''
-        Script implements following processes:
-            - creating a robot to pass tests for Upwork;
-            - database connection;
-            - work with the database (read and write);
-            CMD example: python core.py
-                        --test_name your_test_name
-                        --user_name your_user_name
-                        --email your_email
-                        --password your_password
-                        --speed
-            '''
-        )
 
-    # point test name
-    ap.add_argument(
-        "-t", "--test_name", type=str, required=True, 
-        help="Test name"
-        )
-
-    # point test name
-    ap.add_argument(
-        "-u", "--user_name", type=str, required=True, 
-        help="User name(login)"
-        )
-
-    # point user email
-    ap.add_argument(
-        "-e", "--email", type=str, required=True, 
-        help="User email"
-        )
-
-    # point user password
-    ap.add_argument(
-        "-p", "--password", type=str, required=True, 
-        help="User password"
-        )
-    ap.add_argument(
-        "-s", "--speed", type=str, required=True, 
-        help="Speed of answers to the questions"
-        )
-
-    args = vars(ap.parse_args())
     logger.info('Stage 1')
     #Making bot !!!
     bot = Bot("Anny")
     bot.start("https://www.upwork.com/")
     #bot.start("http://whatismyipaddress.com/")
     #Check where bot
+
     writeTempFile(bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing"))
     locationControl(bot.checkLocation("Upwork - Hire Freelancers & Get Freelance Jobs Online", "landing"))
     #Go to login page
@@ -90,8 +49,8 @@ if __name__ == "__main__":
     writeTempFile(bot.checkLocation("Log In - Upwork", "login"))
     locationControl(bot.checkLocation("Log In - Upwork", "login"))
     #Fill the box with login and password
-    bot.writeField(".//*[@id='login_username']", args["user_name"])
-    bot.writeField(".//*[@id='login_password']", args["password"])
+    bot.writeField(".//*[@id='login_username']", user_name)
+    bot.writeField(".//*[@id='login_password']", password)
    
     #login
     bot.clickOnButton(".//*[@id='layout']/div[1]/div/form/div[3]/div[1]/button")
@@ -106,9 +65,8 @@ if __name__ == "__main__":
     #Check where bot
     writeTempFile(bot.checkLocation("Qualification Tests for Freelancers & Programmers - Certifications for Outsourcing - Upwork", "tests"))
     locationControl(bot.checkLocation("Qualification Tests for Freelancers & Programmers - Certifications for Outsourcing - Upwork", "tests"))
-    print "Hello3"
     #Finding text.
-    bot.writeField(".//*[@id='filter_name']", args["test_name"].replace('_', ' '))
+    bot.writeField(".//*[@id='filter_name']", test_name.replace('_', ' '))
     bot.clickOnButton(".//*[@id='submitButton']")
     time.sleep(1)
 
@@ -129,7 +87,7 @@ if __name__ == "__main__":
             writeTempFile(bot.doSpeak("{}. {}".format(i+1, testList[i])))
         while True:
             #Ждем пока пользователь не выберет нужный тест
-            file = open(os.path.join(BASE_DIR, 'data', 'botPhrase.txt'), 'r')
+            file = open(resource_path(os.path.join('data', 'botPhrase.txt')), 'r')
             fileContent = file.readlines()
             if fileContent.count("Test selected.\n"):
                 testNumber = int(fileContent[-1])
@@ -143,7 +101,7 @@ if __name__ == "__main__":
     writeTempFile(bot.checkLocation("{} - Upwork".format(testList[testNumber-1]), "{}".format(testList[testNumber-1])))
     locationControl(bot.checkLocation("{} - Upwork".format(testList[testNumber-1]), "{}".format(testList[testNumber-1])))
 
-    bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/4/Python%20Test%20-%20Upwork.html')
+    #bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/4/Python%20Test%20-%20Upwork.html')
     #bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/Django%20Test/1/Django%20Test%20-%20Upwork.html')
     #bot._getURL('file:///home/nikolay/Fortifier_proj/HolesUpwork/css_test/1/CSS%20Test%20-%20Upwork.html')
     #Go to the page with the tests
@@ -155,7 +113,7 @@ if __name__ == "__main__":
     #Connecting the database
     #In turn called every page and if the question is a new one, write it in the database.
     #Database Connection
-    cur, con = connect_or_create(os.path.join(BASE_DIR, 'data', 'database.db'))
+    cur, con = connect_or_create(resource_path(os.path.join('data', 'database.db')))
     #Create the table Question, if it does not exist yet
     try:
         create_table("Qestion", cur, con, TEST="TEXT", QESTION="TEXT", ANSWERS="TEXT", CORRECT="TEXT", MOREONE = "BOOLEAN")
@@ -238,9 +196,10 @@ if __name__ == "__main__":
             #time.sleep(3)
 
         #acknowledgment response
-        if args["speed"] =="False":
+        if speed =="False":
             time.sleep(10)
         bot.clickOnButton('//*[@id="continue"]')
 
     #It is done, close the browser
+
     bot.finish()
